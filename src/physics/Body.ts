@@ -1,11 +1,16 @@
-import { listen } from "../events";
 import { isKeyPressed } from "../input";
 import Map from "../map/Map";
 import Player from "../Player";
 
 export default class Body {
-    constructor(public readonly player: Player, public readonly map: Map) {
-        this.listeners.push(listen("frame", ({ delta }) => {
+    constructor(public readonly player: Player, public readonly map: Map) { }
+
+    public position: { x: number; y: number; } = { x: 0, y: 0 };
+    public collisionBox: { width: number; height: number; } = { width: 20, height: 20 };
+    public velocity: { x: number; y: number; } = { x: 0, y: 0 };
+
+    frame(delta: number) {
+        {
 
             console.info(this.shouldPassthrough());
 
@@ -40,18 +45,6 @@ export default class Body {
             this.velocity.x -= this.velocity.x * DRAG * delta;
             this.velocity.y -= this.velocity.y * DRAG * delta;
 
-        }));
-    }
-
-    private listeners = [] as { unsubscribe: () => void; }[];
-
-    public position: { x: number; y: number; } = { x: 0, y: 0 };
-    public collisionBox: { width: number; height: number; } = { width: 20, height: 20 };
-    public velocity: { x: number; y: number; } = { x: 0, y: 0 };
-
-    cleanup() {
-        for (let listener of this.listeners) {
-            listener.unsubscribe();
         }
     }
 

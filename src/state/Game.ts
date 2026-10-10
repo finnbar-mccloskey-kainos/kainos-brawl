@@ -29,15 +29,18 @@ export default class Game {
         for (let listener of this.listeners) {
             listener.unsubscribe();
         }
-        for (let player of this.players) {
-            player.cleanup();
-        }
     }
 
-    render(context: CanvasRenderingContext2D) {
+    render(context: CanvasRenderingContext2D, delta: number) {
+
         if (this.map.background) {
             context.drawImage(this.map.background, 0, 0, context.canvas.width, context.canvas.height);
         }
+
+        for (let player of this.players) {
+            player.frame(delta);
+        }
+
         for (let player of this.players) {
             context.fillStyle = "red";
             context.fillRect(Math.trunc(player.body.position.x), Math.trunc(player.body.position.y), 20, -20);

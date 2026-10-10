@@ -11,7 +11,7 @@ export const DEBUG = true;
 const canvas = document.querySelector<HTMLCanvasElement>("#game")!;
 const context = canvas.getContext("2d")!;
 
-export type GameState = (MainMenu | Game) & { cleanup(): void; render(context: CanvasRenderingContext2D): void; };
+export type GameState = (MainMenu | Game) & { cleanup(): void; render(context: CanvasRenderingContext2D, delta: number): void; };
 
 const map = new Map(TestMap);
 
@@ -24,7 +24,7 @@ requestAnimationFrame(function gameLoop() {
 
     emit("frame", { delta });
 
-    gameState.render(context);
+    gameState.render(context, delta);
 
     requestAnimationFrame(gameLoop);
 });
