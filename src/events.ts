@@ -7,7 +7,7 @@ export type EventTypes = {
     "stateChange": { oldState: GameState; newState: GameState; };
     "frame": { delta: number; };
     "render": { context: CanvasRenderingContext2D; };
-    "healthChange": { player: Player; oldHealth: number; newHealth: number; };
+    "percentageChange": { player: Player; oldPercentage: number; newPercentage: number; };
 };
 
 export function emit<const T extends keyof EventTypes>(event: T, data: EventTypes[T]) {

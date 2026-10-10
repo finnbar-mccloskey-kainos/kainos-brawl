@@ -1,22 +1,28 @@
 import { listen } from "../events";
 import { DEBUG } from "../main";
 import Map from "../map/Map";
-import Player from "../Player";
+import Player, { Controls } from "../Player";
 import { mouse_pos } from "../main";
 
 export default class Game {
 
     private listeners = [] as { unsubscribe: () => void; }[];
 
+    players: Player[] = [];
+
     constructor(
-        public readonly players: Player[],
+        players: {
+            name: string,
+            controls: Controls;
+        }[],
         public readonly map: Map,
     ) {
-        document.getElementById("ui")!.replaceChildren(...players.map(player => {
+        this.players = players.map(player => new Player(map, this, player.name, player.controls));
+        document.getElementById("ui")!.replaceChildren(...this.players.map(player => {
             const div = document.createElement("div");
             div.className = "player";
-            div.textContent = `${player.name}: ${player.health}`;
-            this.listeners.push(listen("healthChange", ({ player: p, oldHealth: _, newHealth }) => {
+            div.textContent = `${player.name}: ${player.percentage}`;
+            this.listeners.push(listen("percentageChange", ({ player: p, oldPercentage: _, newPercentage: newHealth }) => {
                 if (p === player) {
                     div.textContent = `${player.name}: ${newHealth}`;
                 }
@@ -42,9 +48,9 @@ export default class Game {
         }
 
         for (let player of this.players) {
-            context.fillStyle = "red";
-            context.fillRect(Math.trunc(player.body.position.x), Math.trunc(player.body.position.y), 20, -20);
+            player.render(context);
         }
+
         if (DEBUG) {
             context.fillStyle = "blue";
             context.fillRect(mouse_pos.x, mouse_pos.y, 1, 1);

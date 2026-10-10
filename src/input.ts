@@ -1,9 +1,9 @@
 let keyPressed: Record<string, boolean> = {};
 window.addEventListener("keydown", (e) => {
-    keyPressed[e.key] = true;
+    keyPressed[e.code] = true;
 });
 window.addEventListener("keyup", (e) => {
-    keyPressed[e.key] = false;
+    keyPressed[e.code] = false;
 });
 
 export function isKeyPressed(key: string): boolean {

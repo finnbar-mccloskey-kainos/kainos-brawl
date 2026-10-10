@@ -1,7 +1,6 @@
 import "./style.css";
 import MainMenu from "./state/MainMenu";
 import Game from "./state/Game";
-import Player from "./Player";
 import { emit, listen } from "./events";
 import Map from "./map/Map";
 import TestMap from "./map/TestMap";
@@ -15,7 +14,13 @@ export type GameState = (MainMenu | Game) & { cleanup(): void; render(context: C
 
 const map = new Map(TestMap);
 
-export const gameState: GameState = new Game([new Player("Player 1", map)], map);
+export const gameState: GameState = new Game(
+    [
+        { name: "Player 1", controls: { left: "KeyA", right: "KeyD", up: "KeyW", down: "KeyS", primary: "ShiftLeft", secondary: "KeyC" } },
+        { name: "Player 2", controls: { left: "KeyJ", right: "KeyL", up: "KeyI", down: "KeyK", primary: "KeyB", secondary: "Period" } }
+    ],
+    map
+);
 
 let lastFrameTime: number | undefined;
 requestAnimationFrame(function gameLoop() {

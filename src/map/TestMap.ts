@@ -17,7 +17,7 @@ export default {
 
         {
             topLeft: { x: 136, y: 54 },
-            bottomRight: { x: 214, y: 54 },
+            bottomRight: { x: 214, y: 65 },
             passthrough: true,
         },
 
