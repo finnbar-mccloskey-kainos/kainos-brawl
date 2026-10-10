@@ -5,26 +5,33 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100vw;
   height: 100vh;
   overflow: hidden;
 }
 
-#game,
-#ui,
 main {
-  width: 100vw;
+  position: relative;
+  width: min(100vw, 157.142857vh);
   overflow: hidden;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 352 / 224;
+}
+
+#game,
+#ui {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 #ui {
-  position: relative;
   z-index: 1;
 }
 
 #game {
-  position: relative;
-  top: -100%;
+  display: block;
   image-rendering: pixelated;
 }
 
