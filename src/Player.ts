@@ -27,7 +27,7 @@ export default class Player {
                 this.body.moveHorizontally(SPEED * delta);
             }
             if (isKeyPressed("ArrowUp") && this.body.isOnGround()) {
-                this.body.velocity = { x: this.body.velocity.x, y: -0.4 };
+                this.body.velocity = { x: this.body.velocity.x, y: -0.3 };
             }
         }));
     }
@@ -41,8 +41,6 @@ export default class Player {
         this._health = value;
         emit("healthChange", { player: this, oldHealth, newHealth: this._health });
     }
-
-
 
     cleanup() {
         for (let listener of this.listeners) {

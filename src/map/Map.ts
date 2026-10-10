@@ -38,7 +38,7 @@ export default class Map {
             if (platform.passthrough && passthrough) continue;
 
             const overlapsHorizontally = from.x <= platform.bottomRight.x &&
-                from.x + collisionBox.width >= platform.topLeft.x;
+                from.x + collisionBox.width > platform.topLeft.x;
             const crossesPlatformTop = movingDown && from.y <= platform.topLeft.y && toY >= platform.topLeft.y;
             const crossesPlatformBottom = movingUp && fromTop >= platform.bottomRight.y && toTop <= platform.bottomRight.y;
 
@@ -103,8 +103,8 @@ export default class Map {
         return this.data.platforms.some(platform =>
             !(platform.passthrough && passthrough) &&
             position.y === platform.topLeft.y &&
-            position.x <= platform.bottomRight.x &&
-            position.x + collisionBox.width >= platform.topLeft.x
+            position.x < platform.bottomRight.x &&
+            position.x + collisionBox.width > platform.topLeft.x
         );
     }
 }
