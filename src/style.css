@@ -1,0 +1,34 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#game,
+#ui,
+main {
+  width: 100vw;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+}
+
+#ui {
+  position: relative;
+}
+
+#game {
+  position: relative;
+  top: -100%;
+  image-rendering: pixelated;
+}
+
+.player {
+  color: white;
+  font-family: sans-serif;
+  margin: 10px 0;
+}
