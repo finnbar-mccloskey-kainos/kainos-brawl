@@ -35,7 +35,7 @@ export default class Player {
     private stunTime: number = 0;
 
     frame(delta: number) {
-        const SPEED = 0.05;
+        const SPEED = 0.1;
         if (this.stunTime > 0) {
             this.stunTime -= delta;
             this.body.frame(delta, true);
@@ -64,7 +64,7 @@ export default class Player {
                             player.body.getCollisionBox()
                         )
                     ) {
-                        player.attack(10, { x: this.facing === "right" ? 0.05 : -0.05, y: -0.05 }, 150);
+                        player.attack(10, { x: this.facing === "right" ? 0.1 : -0.1, y: -0.1 }, 150);
                         this.stunTime = 300;
                     }
                 }

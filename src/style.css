@@ -1,3 +1,8 @@
+@font-face {
+  font-family: 'Kiwi Soda';
+  src: URL('/KiwiSoda.ttf') format('truetype');
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -8,6 +13,7 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  font-family: 'Kiwi Soda', sans-serif;
 }
 
 main {
@@ -15,6 +21,7 @@ main {
   width: min(100vw, 157.142857vh);
   overflow: hidden;
   aspect-ratio: 352 / 224;
+  outline: var(--pixel) solid yellow;
 }
 
 #game,
@@ -39,4 +46,44 @@ main {
   color: black;
   font-family: sans-serif;
   margin: 10px 0;
+}
+
+.character-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.character {
+  width: calc(42*var(--pixel));
+  height: calc(42*var(--pixel));
+  background-color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: calc(var(--pixel));
+  font-size: calc(10*var(--pixel));
+  --selection: gray;
+}
+
+.player1-selection {
+  margin: 0;
+  border: var(--pixel) solid blue;
+  --selection: blue;
+}
+
+.player2-selection {
+  margin: 0;
+  border: var(--pixel) solid red;
+  --selection: red;
+}
+
+.player1-selection.player2-selection {
+  margin: 0;
+  border: var(--pixel) solid blue;
+  outline: var(--pixel) solid red;
+  --selection: purple;
+}
+
+.confirmed {
+  background: var(--selection);
 }

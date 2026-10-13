@@ -2,8 +2,6 @@ import "./style.css";
 import MainMenu from "./state/MainMenu";
 import Game from "./state/Game";
 import { emit, listen } from "./events";
-import Map from "./map/Map";
-import TestMap from "./map/TestMap";
 
 export const DEBUG = true;
 
@@ -12,15 +10,9 @@ const context = canvas.getContext("2d")!;
 
 export type GameState = (MainMenu | Game) & { cleanup(): void; render(context: CanvasRenderingContext2D, delta: number): void; };
 
-const map = new Map(TestMap);
+export const playerControls = [{ left: "KeyA", right: "KeyD", up: "KeyW", down: "KeyS", primary: "ShiftLeft", secondary: "KeyC" }, { left: "KeyJ", right: "KeyL", up: "KeyI", down: "KeyK", primary: "KeyB", secondary: "Period" }];
 
-export const gameState: GameState = new Game(
-    [
-        { name: "Player 1", controls: { left: "KeyA", right: "KeyD", up: "KeyW", down: "KeyS", primary: "ShiftLeft", secondary: "KeyC" } },
-        { name: "Player 2", controls: { left: "KeyJ", right: "KeyL", up: "KeyI", down: "KeyK", primary: "KeyB", secondary: "Period" } }
-    ],
-    map
-);
+export let gameState: GameState = new MainMenu();
 
 let lastFrameTime: number | undefined;
 requestAnimationFrame(function gameLoop() {
@@ -34,11 +26,19 @@ requestAnimationFrame(function gameLoop() {
     requestAnimationFrame(gameLoop);
 });
 
-listen("stateChange", ({ oldState, newState: _ }) => {
+listen("stateChange", ({ oldState, newState }) => {
     oldState.cleanup();
+    gameState = newState;
 });
 
 export let mouse_pos = { x: 0, y: 0 };
+
+function updateGamePixelSize() {
+    const pixelSize = canvas.getBoundingClientRect().width / canvas.width;
+    document.documentElement.style.setProperty("--pixel", `${pixelSize}px`);
+}
+
+window.addEventListener("resize", updateGamePixelSize);
 
 if (DEBUG) {
     document.onclick = () => {
@@ -51,3 +51,5 @@ if (DEBUG) {
         mouse_pos.y = Math.floor((event.clientY - rect.top) * canvas.height / rect.height);
     };
 }
+
+updateGamePixelSize();

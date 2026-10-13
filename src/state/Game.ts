@@ -1,7 +1,7 @@
 import { listen } from "../events";
-import { DEBUG } from "../main";
+import { DEBUG, playerControls } from "../main";
 import Map from "../map/Map";
-import Player, { Controls } from "../Player";
+import Player from "../Player";
 import { mouse_pos } from "../main";
 
 export default class Game {
@@ -11,13 +11,9 @@ export default class Game {
     players: Player[] = [];
 
     constructor(
-        players: {
-            name: string,
-            controls: Controls;
-        }[],
         public readonly map: Map,
     ) {
-        this.players = players.map(player => new Player(map, this, player.name, player.controls));
+        this.players = [new Player(map, this, "Player 1", playerControls[0]), new Player(map, this, "Player 2", playerControls[1])];
         document.getElementById("ui")!.replaceChildren(...this.players.map(player => {
             const div = document.createElement("div");
             div.className = "player";

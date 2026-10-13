@@ -1,7 +1,92 @@
-export default class MainMenu {
-    cleanup() {
+import Character from "../character/Character";
+import TestCharacter from "../character/TestCharacter";
+import { emit } from "../events";
+import { playerControls } from "../main";
+import Map from "../map/Map";
+import TestMap from "../map/TestMap";
+import Game from "./Game";
+
+const characters: Character[] = Array(16).fill(new TestCharacter());
+const characterGridColumns = 8;
+
+export default class MainMenu implements EventListenerObject {
+
+    private selections: { number: number, confirmed: boolean; }[] = [{ number: 0, confirmed: false }, { number: 0, confirmed: false }];
+
+    constructor() {
+        window.addEventListener("keydown", this);
+        const characterList = document.createElement("div");
+        characterList.className = "character-list";
+        characterList.replaceChildren(...characters.map(character => {
+            const div = document.createElement("div");
+            div.className = "character";
+            div.textContent = character.name;
+            return div;
+        }));
+        document.getElementById("ui")?.replaceChildren(characterList);
     }
 
-    render(_context: CanvasRenderingContext2D) {
+    cleanup() {
+        window.removeEventListener("keydown", this);
+    }
+
+    render(context: CanvasRenderingContext2D) {
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+    }
+
+    handleEvent(event: Event) {
+        if (event instanceof KeyboardEvent) {
+            for (const [index, controls] of playerControls.entries()) {
+                for (const [action, key] of Object.entries(controls)) {
+                    if (event.code === key) {
+                        if (this.selections[index].confirmed) {
+                            if (action === "primary" || action === "secondary") {
+                                this.selections[index].confirmed = false;
+                            }
+                        } else {
+                            if (action === "left" && this.selections[index].number > 0) {
+                                this.selections[index].number--;
+                            } else if (action === "right" && this.selections[index].number < characters.length - 1) {
+                                this.selections[index].number++;
+                            } else if (action === "up" && this.selections[index].number >= characterGridColumns) {
+                                this.selections[index].number -= characterGridColumns;
+                            } else if (action === "down" && this.selections[index].number < characters.length - characterGridColumns) {
+                                this.selections[index].number += characterGridColumns;
+                            } else if (action === "primary") {
+                                this.selections[index].confirmed = true;
+                            } else {
+                                continue;
+                            }
+                        }
+                    }
+                    this.refreshCharacterSelection();
+                }
+            }
+        }
+    }
+
+    refreshCharacterSelection() {
+        const characterElements = document.querySelectorAll(".character");
+
+        for (const characterElement of characterElements) {
+            for (const index of this.selections.keys()) {
+                characterElement.classList.remove(`player${index + 1}-selection`);
+            }
+            characterElement.classList.remove("confirmed");
+        }
+
+        for (const [index, selection] of this.selections.entries()) {
+            const characterElement = characterElements[selection.number];
+            if (characterElement) {
+                characterElement.classList.add(`player${index + 1}-selection`);
+                if (selection.confirmed) {
+                    characterElement.classList.add("confirmed");
+                }
+            }
+        }
+
+        if (this.selections.every(selection => selection.confirmed)) {
+            emit("stateChange", { oldState: this, newState: new Game(new Map(TestMap)) });
+        }
     }
 }
