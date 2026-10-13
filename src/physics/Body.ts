@@ -1,16 +1,24 @@
 import { isKeyPressed } from "../input";
 import Game from "../state/Game";
 
+export const REALISTIC_DRAG = 0.001;
+export const REALISTIC_GRAVITY = 0.0003;
+
 export default class Body {
     constructor(
         private game: Game,
         public position: { x: number; y: number; },
         public collisionBoxSize: { width: number; height: number; },
         public velocity: { x: number; y: number; } = { x: 0, y: 0 },
+        public drag: number = REALISTIC_DRAG,
+        public gravity: number = REALISTIC_GRAVITY,
         public readonly passthroughKey: string | undefined = undefined
     ) { }
 
     frame(delta: number, noPassthrough = false) {
+
+        console.log(this.position);
+
         let passthrough: boolean;
         if (this.passthroughKey !== undefined) {
             if (noPassthrough) {
@@ -33,7 +41,7 @@ export default class Body {
             this.position.x = nextX;
         }
 
-        const nextVelocityY = this.velocity.y + 0.0003 * delta;
+        const nextVelocityY = this.velocity.y + this.gravity * delta;
         const nextY = this.position.y + nextVelocityY * delta;
         const collisionY = this.game.map.getVerticalCollisionY(
             this.position,
@@ -50,11 +58,8 @@ export default class Body {
             this.position.y = nextY;
         }
 
-        const DRAG = 0.001;
-        this.velocity.x -= this.velocity.x * DRAG * delta;
-        this.velocity.y -= this.velocity.y * DRAG * delta;
-
-
+        this.velocity.x -= this.velocity.x * this.drag * delta;
+        this.velocity.y -= this.velocity.y * this.drag * delta;
     }
 
     moveHorizontally(distance: number) {

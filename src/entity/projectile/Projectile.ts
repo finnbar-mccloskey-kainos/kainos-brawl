@@ -3,6 +3,7 @@ import Game from "../../state/Game";
 import boxesOverlap from "../../util/boxesOverlap";
 import Entity from "../Entity";
 import { isAttackable } from "../Attackable";
+import ProjectilePreset from "./ProjectilePreset";
 
 export default class Projectile implements Entity {
 
@@ -16,7 +17,11 @@ export default class Projectile implements Entity {
         return this._shouldDelete;
     }
 
-    constructor(private readonly game: Game, public readonly source: Entity, public readonly damage: number, public readonly knockback: number, public readonly stunTime: number) {
+    constructor(
+        private readonly game: Game,
+        public readonly source: Entity,
+        public preset: ProjectilePreset,
+    ) {
         this.body = new Body(game, { ...source.body.position }, { width: 10, height: 10 });
     }
 
@@ -46,7 +51,7 @@ export default class Projectile implements Entity {
                     entity.body.position.y - this.body.position.y,
                     entity.body.position.x - this.body.position.x
                 );
-                entity.attack(this.damage, { x: Math.cos(knockbackAngle) * this.knockback, y: Math.sin(knockbackAngle) * this.knockback }, this.stunTime);
+                entity.attack(this.preset.damage, { x: Math.cos(knockbackAngle) * this.preset.knockback, y: Math.sin(knockbackAngle) * this.preset.knockback }, this.preset.stunTime);
                 this._shouldDelete = true;
             }
         }

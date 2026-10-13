@@ -1,5 +1,4 @@
 import Character from "../character/Character";
-import TestCharacter from "../character/TestCharacter";
 import { emit } from "../events";
 import { logo, playerControls } from "../main";
 import Map from "../map/Map";
@@ -8,8 +7,9 @@ import Game from "./Game";
 import HELP_MESSAGE from "../constants/help.html?raw";
 import Brendan from "../character/Brendan";
 import Simon from "../character/Simon";
+import Callum from "../character/Callum";
 
-const characters: Character[] = [new TestCharacter("green"), new Brendan("yellow"), new Simon("blue")];
+const characters: Character[] = [new Callum(), new Brendan("yellow"), new Simon("blue")];
 const characterGridColumns = 8;
 
 export default class MainMenu implements EventListenerObject {

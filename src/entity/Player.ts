@@ -2,7 +2,7 @@ import Character from "../character/Character";
 import Entity from "./Entity";
 import { emit } from "../events";
 import { isKeyPressed } from "../input";
-import Body from "../physics/Body";
+import Body, { REALISTIC_DRAG, REALISTIC_GRAVITY } from "../physics/Body";
 import Game from "../state/Game";
 import boxesOverlap from "../util/boxesOverlap";
 import boxTranslate from "../util/boxTranslate";
@@ -32,7 +32,7 @@ export default class Player implements Entity, Attackable {
         public readonly controls: Controls,
         public readonly character: Character
     ) {
-        this.body = new Body(game, { x: 100, y: 0 }, this.character.collisionBox, { x: 0, y: 0 }, controls.down);
+        this.body = new Body(game, { x: 100, y: 0 }, this.character.collisionBox, { x: 0, y: 0 }, REALISTIC_DRAG, REALISTIC_GRAVITY, controls.down);
     }
 
     private stunTime: number = 0;
@@ -74,7 +74,7 @@ export default class Player implements Entity, Attackable {
             }
 
             if (isKeyPressed(this.controls.secondary) && !isKeyPressed(this.controls.up) && !isKeyPressed(this.controls.down)) {
-                const projectile = new Projectile(this.game, this, 5, 0.3, 300);
+                const projectile = new Projectile(this.game, this, this.character.projectilePreset);
                 this.game.entities.push(projectile);
                 this.stunTime = 500;
                 projectile.body.velocity = { x: this.facing === "right" ? 0.3 : -0.3, y: -0.2 };

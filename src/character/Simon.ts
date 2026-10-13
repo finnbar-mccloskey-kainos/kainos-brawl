@@ -21,4 +21,15 @@ export default class Simon implements Character {
         context.fillRect(Math.trunc(position.x), Math.trunc(position.y), 20, -35);
         context.fillRect(Math.trunc(position.x + 20), Math.trunc(position.y - 10), facing === "right" ? 20 : -40, 1);
     }
+
+    get projectilePreset() {
+        return {
+            damage: 10,
+            drag: 0.001,
+            gravity: 0.0003,
+            knockback: 0.03,
+            maxLifetime: 2000,
+            stunTime: 300
+        };
+    }
 }
