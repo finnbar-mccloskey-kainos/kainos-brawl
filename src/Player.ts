@@ -1,3 +1,4 @@
+import Character from "./character/Character";
 import { emit } from "./events";
 import { isKeyPressed } from "./input";
 import Map from "./map/Map";
@@ -17,7 +18,7 @@ export type Controls = {
 
 export default class Player {
 
-    private _percentage: number = 1;
+    private _percentage: number = 0;
 
     public facing: "left" | "right" = "right";
 
@@ -27,7 +28,8 @@ export default class Player {
         map: Map,
         private readonly game: Game,
         public readonly name: string,
-        public readonly controls: Controls
+        public readonly controls: Controls,
+        public readonly character: Character
     ) {
         this.body = new Body(this, map, controls.down);
     }
@@ -71,9 +73,6 @@ export default class Player {
             }
             this.body.frame(delta, false);
         }
-
-
-
     }
 
     attack(damage: number, knockback: { x: number, y: number; }, stunTime: number) {
@@ -85,9 +84,7 @@ export default class Player {
     }
 
     render(context: CanvasRenderingContext2D) {
-        context.fillStyle = "red";
-        context.fillRect(Math.trunc(this.body.position.x), Math.trunc(this.body.position.y), 20, -20);
-        context.fillRect(Math.trunc(this.body.position.x + 20), Math.trunc(this.body.position.y - 10), this.facing === "right" ? 20 : -40, 1);
+        this.character.render(context, { x: this.body.position.x, y: this.body.position.y }, this.facing);
     }
 
     get percentage() {

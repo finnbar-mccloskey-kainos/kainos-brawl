@@ -3,6 +3,7 @@ import { DEBUG, playerControls } from "../main";
 import Map from "../map/Map";
 import Player from "../Player";
 import { mouse_pos } from "../main";
+import Character from "../character/Character";
 
 export default class Game {
 
@@ -12,8 +13,9 @@ export default class Game {
 
     constructor(
         public readonly map: Map,
+        characters: Character[]
     ) {
-        this.players = [new Player(map, this, "Player 1", playerControls[0]), new Player(map, this, "Player 2", playerControls[1])];
+        this.players = [new Player(map, this, "Player 1", playerControls[0], characters[0]), new Player(map, this, "Player 2", playerControls[1], characters[1])];
         document.getElementById("ui")!.replaceChildren(...this.players.map(player => {
             const div = document.createElement("div");
             div.className = "player";

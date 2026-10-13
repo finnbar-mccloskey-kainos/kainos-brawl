@@ -6,7 +6,7 @@ import Map from "../map/Map";
 import TestMap from "../map/TestMap";
 import Game from "./Game";
 
-const characters: Character[] = Array(16).fill(new TestCharacter());
+const characters: Character[] = [new TestCharacter("green"), new TestCharacter("yellow")];
 const characterGridColumns = 8;
 
 export default class MainMenu implements EventListenerObject {
@@ -86,7 +86,7 @@ export default class MainMenu implements EventListenerObject {
         }
 
         if (this.selections.every(selection => selection.confirmed)) {
-            emit("stateChange", { oldState: this, newState: new Game(new Map(TestMap)) });
+            emit("stateChange", { oldState: this, newState: new Game(new Map(TestMap), this.selections.map(selection => characters[selection.number])) });
         }
     }
 }

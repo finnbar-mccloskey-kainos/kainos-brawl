@@ -10,7 +10,8 @@ const context = canvas.getContext("2d")!;
 
 export type GameState = (MainMenu | Game) & { cleanup(): void; render(context: CanvasRenderingContext2D, delta: number): void; };
 
-export const playerControls = [{ left: "KeyA", right: "KeyD", up: "KeyW", down: "KeyS", primary: "ShiftLeft", secondary: "KeyC" }, { left: "KeyJ", right: "KeyL", up: "KeyI", down: "KeyK", primary: "KeyB", secondary: "Period" }];
+export const playerControls = [
+    { left: "KeyA", right: "KeyD", up: "KeyW", down: "KeyS", primary: "ShiftLeft", secondary: "KeyC" }, { left: "KeyJ", right: "KeyL", up: "KeyI", down: "KeyK", primary: "KeyB", secondary: "Period" }];
 
 export let gameState: GameState = new MainMenu();
 
