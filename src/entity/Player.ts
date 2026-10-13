@@ -1,11 +1,13 @@
-import Character from "./character/Character";
-import { emit } from "./events";
-import { isKeyPressed } from "./input";
-import Map from "./map/Map";
-import Body from "./physics/Body";
-import Game from "./state/Game";
-import boxesOverlap from "./util/boxesOverlap";
-import boxTranslate from "./util/boxTranslate";
+import Character from "../character/Character";
+import Entity from "./Entity";
+import { emit } from "../events";
+import { isKeyPressed } from "../input";
+import Body from "../physics/Body";
+import Game from "../state/Game";
+import boxesOverlap from "../util/boxesOverlap";
+import boxTranslate from "../util/boxTranslate";
+import Attackable from "./Attackable";
+import Projectile from "./projectile/Projectile";
 
 export type Controls = {
     left: string,
@@ -16,7 +18,7 @@ export type Controls = {
     secondary: string;
 };
 
-export default class Player {
+export default class Player implements Entity, Attackable {
 
     private _percentage: number = 0;
 
@@ -25,13 +27,12 @@ export default class Player {
     public body: Body;
 
     constructor(
-        map: Map,
         private readonly game: Game,
         public readonly name: string,
         public readonly controls: Controls,
         public readonly character: Character
     ) {
-        this.body = new Body(this, map, controls.down);
+        this.body = new Body(game, { x: 100, y: 0 }, this.character.collisionBox, { x: 0, y: 0 }, controls.down);
     }
 
     private stunTime: number = 0;
@@ -71,6 +72,13 @@ export default class Player {
                     }
                 }
             }
+
+            if (isKeyPressed(this.controls.secondary) && !isKeyPressed(this.controls.up) && !isKeyPressed(this.controls.down)) {
+                const projectile = new Projectile(this.game, this, 5, 0.3, 300);
+                this.game.entities.push(projectile);
+                this.stunTime = 500;
+                projectile.body.velocity = { x: this.facing === "right" ? 0.3 : -0.3, y: -0.2 };
+            }
             this.body.frame(delta, false);
         }
     }
@@ -97,4 +105,7 @@ export default class Player {
         emit("percentageChange", { player: this, oldPercentage: oldPercentage, newPercentage: this._percentage });
     }
 
+    get shouldDelete() {
+        return false;
+    }
 }

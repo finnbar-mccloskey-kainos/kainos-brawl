@@ -1,9 +1,10 @@
 import { listen } from "../events";
 import { DEBUG, playerControls } from "../main";
 import Map from "../map/Map";
-import Player from "../Player";
+import Player from "../entity/Player";
 import { mouse_pos } from "../main";
 import Character from "../character/Character";
+import Entity from "../entity/Entity";
 
 export default class Game {
 
@@ -11,11 +12,14 @@ export default class Game {
 
     players: Player[] = [];
 
+    entities: Entity[] = [];
+
     constructor(
         public readonly map: Map,
         characters: Character[]
     ) {
-        this.players = [new Player(map, this, "Player 1", playerControls[0], characters[0]), new Player(map, this, "Player 2", playerControls[1], characters[1])];
+        this.players = [new Player(this, "Player 1", playerControls[0], characters[0]), new Player(this, "Player 2", playerControls[1], characters[1])];
+        this.entities = [...this.players];
         document.getElementById("ui")!.replaceChildren(...this.players.map(player => {
             const div = document.createElement("div");
             div.className = "player";
@@ -41,13 +45,15 @@ export default class Game {
             context.drawImage(this.map.background, 0, 0, context.canvas.width, context.canvas.height);
         }
 
-        for (let player of this.players) {
-            player.frame(delta);
+        for (let entity of this.entities) {
+            entity.frame(delta);
         }
 
-        for (let player of this.players) {
-            player.render(context);
+        for (let entity of this.entities) {
+            entity.render(context);
         }
+
+        this.entities = this.entities.filter(entity => !entity.shouldDelete);
 
         if (DEBUG) {
             context.fillStyle = "blue";

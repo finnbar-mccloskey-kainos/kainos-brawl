@@ -1,26 +1,30 @@
 import { isKeyPressed } from "../input";
-import Map from "../map/Map";
-import Player from "../Player";
+import Game from "../state/Game";
 
 export default class Body {
-    constructor(public readonly player: Player, public readonly map: Map, public readonly passthroughKey: string) { }
-
-    public position: { x: number; y: number; } = { x: 100, y: 0 };
-    public collisionBoxSize: { width: number; height: number; } = { width: 20, height: 20 };
-    public velocity: { x: number; y: number; } = { x: 0, y: 0 };
+    constructor(
+        private game: Game,
+        public position: { x: number; y: number; },
+        public collisionBoxSize: { width: number; height: number; },
+        public velocity: { x: number; y: number; } = { x: 0, y: 0 },
+        public readonly passthroughKey: string | undefined = undefined
+    ) { }
 
     frame(delta: number, noPassthrough = false) {
-
         let passthrough: boolean;
-        if (noPassthrough) {
-            passthrough = false;
+        if (this.passthroughKey !== undefined) {
+            if (noPassthrough) {
+                passthrough = false;
+            } else {
+                passthrough = isKeyPressed(this.passthroughKey) || this.velocity.y < 0;
+            }
         } else {
-            passthrough = isKeyPressed(this.passthroughKey) || this.velocity.y < 0;
+            passthrough = false;
         }
 
 
         const nextX = this.position.x + this.velocity.x * delta;
-        const collisionX = this.map.getHorizontalCollisionX(this.position, nextX, this.collisionBoxSize);
+        const collisionX = this.game.map.getHorizontalCollisionX(this.position, nextX, this.collisionBoxSize);
 
         if (collisionX !== undefined) {
             this.position.x = collisionX;
@@ -31,7 +35,7 @@ export default class Body {
 
         const nextVelocityY = this.velocity.y + 0.0003 * delta;
         const nextY = this.position.y + nextVelocityY * delta;
-        const collisionY = this.map.getVerticalCollisionY(
+        const collisionY = this.game.map.getVerticalCollisionY(
             this.position,
             nextY,
             this.collisionBoxSize,
@@ -55,12 +59,12 @@ export default class Body {
 
     moveHorizontally(distance: number) {
         const nextX = this.position.x + distance;
-        const collisionX = this.map.getHorizontalCollisionX(this.position, nextX, this.collisionBoxSize);
+        const collisionX = this.game.map.getHorizontalCollisionX(this.position, nextX, this.collisionBoxSize);
         this.position.x = collisionX ?? nextX;
     }
 
     isOnGround() {
-        return this.map.isStandingOnPlatform(
+        return this.game.map.isStandingOnPlatform(
             this.position,
             this.collisionBoxSize,
         );
@@ -68,8 +72,8 @@ export default class Body {
 
     getCollisionBox() {
         return {
-            topLeft: { x: this.position.x, y: this.position.y },
-            bottomRight: { x: this.position.x + this.collisionBoxSize.width, y: this.position.y + this.collisionBoxSize.height }
+            topLeft: { x: this.position.x, y: this.position.y - this.collisionBoxSize.height },
+            bottomRight: { x: this.position.x + this.collisionBoxSize.width, y: this.position.y }
         };
     }
 }

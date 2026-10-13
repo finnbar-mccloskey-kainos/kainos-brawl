@@ -12,6 +12,10 @@ export default class Brendan implements Character {
         return "characters/brendan/face.jpeg";
     }
 
+    get collisionBox() {
+        return { width: 20, height: 35 };
+    }
+
     render(context: CanvasRenderingContext2D, position: { x: number, y: number; }, facing: "left" | "right"): void {
         context.fillStyle = this.colour;
         context.fillRect(Math.trunc(position.x), Math.trunc(position.y), 20, -35);
