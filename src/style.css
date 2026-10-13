@@ -3,6 +3,10 @@
   src: URL('/KiwiSoda.ttf') format('truetype');
 }
 
+* {
+  image-rendering: pixelated;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -21,7 +25,6 @@ main {
   width: min(100vw, 157.142857vh);
   overflow: hidden;
   aspect-ratio: 352 / 224;
-  outline: var(--pixel) solid yellow;
 }
 
 #game,
@@ -35,6 +38,18 @@ main {
 
 #ui {
   z-index: 1;
+}
+
+.main-menu {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-image: url("/office outside.png");
+  background-size: cover;
+  background-position: center;
 }
 
 #game {
@@ -65,6 +80,19 @@ main {
   --selection: gray;
 }
 
+.character-icon {
+  width: calc(42*var(--pixel));
+  height: calc(42*var(--pixel));
+}
+
+.player1-selection .character-icon {
+  opacity: 0.5;
+}
+
+.player2-selection .character-icon {
+  opacity: 0.5;
+}
+
 .player1-selection {
   margin: 0;
   border: var(--pixel) solid blue;
@@ -86,4 +114,39 @@ main {
 
 .confirmed {
   background: var(--selection);
+}
+
+.logo {
+  width: calc(148*var(--pixel));
+  image-rendering: pixelated;
+}
+
+.help {
+  background: white;
+  border: var(--pixel) solid black;
+  padding: var(--pixel);
+  opacity: 0.6;
+  transition: all 0.3s ease;
+  font-size: calc(7*var(--pixel));
+}
+
+.help:hover {
+  opacity: 1;
+}
+
+.help:hover .help-table {
+  font-size: calc(7*var(--pixel));
+}
+
+.help-table {
+  transition: all 0.3s ease;
+  font-size: calc(0*var(--pixel));
+}
+
+.help-table,
+.help-table th,
+.help-table td {
+  border: var(--pixel) solid black;
+  border-collapse: collapse;
+  padding: var(--pixel);
 }

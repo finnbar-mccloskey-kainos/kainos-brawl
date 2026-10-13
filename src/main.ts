@@ -3,6 +3,10 @@ import MainMenu from "./state/MainMenu";
 import Game from "./state/Game";
 import { emit, listen } from "./events";
 
+export let logo = new Image();
+logo.src = "/logo.png";
+logo.classList.add("logo");
+
 export const DEBUG = true;
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game")!;

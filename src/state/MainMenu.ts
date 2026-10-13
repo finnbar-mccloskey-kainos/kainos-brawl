@@ -1,12 +1,15 @@
 import Character from "../character/Character";
 import TestCharacter from "../character/TestCharacter";
 import { emit } from "../events";
-import { playerControls } from "../main";
+import { logo, playerControls } from "../main";
 import Map from "../map/Map";
 import TestMap from "../map/TestMap";
 import Game from "./Game";
+import HELP_MESSAGE from "../constants/help.html?raw";
+import Brendan from "../character/Brendan";
+import Simon from "../character/Simon";
 
-const characters: Character[] = [new TestCharacter("green"), new TestCharacter("yellow")];
+const characters: Character[] = [new TestCharacter("green"), new Brendan("yellow"), new Simon("blue")];
 const characterGridColumns = 8;
 
 export default class MainMenu implements EventListenerObject {
@@ -20,10 +23,20 @@ export default class MainMenu implements EventListenerObject {
         characterList.replaceChildren(...characters.map(character => {
             const div = document.createElement("div");
             div.className = "character";
-            div.textContent = character.name;
+            const icon = new Image();
+            icon.className = "character-icon";
+            icon.src = character.icon;
+            div.appendChild(icon);
             return div;
         }));
-        document.getElementById("ui")?.replaceChildren(characterList);
+        let mainMenu = document.createElement("div");
+        mainMenu.className = "main-menu";
+
+        const help = document.createElement("div");
+        help.className = "help";
+        help.innerHTML = HELP_MESSAGE.replace("\n", "\r\n");
+        mainMenu.replaceChildren(logo, characterList, help);
+        document.getElementById("ui")?.replaceChildren(mainMenu);
     }
 
     cleanup() {
