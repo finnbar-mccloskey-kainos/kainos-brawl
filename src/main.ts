@@ -2,6 +2,10 @@ import "./style.css";
 import MainMenu from "./state/MainMenu";
 import Game from "./state/Game";
 import { emit, listen } from "./events";
+import TestMap from "./map/TestMap";
+import Brendan from "./character/Brendan";
+import Callum from "./character/Callum";
+import Map from "./map/Map";
 
 export let logo = new Image();
 logo.src = "/logo.png";
@@ -10,7 +14,10 @@ logo.classList.add("logo");
 export const DEBUG = true;
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game")!;
-const context = canvas.getContext("2d")!;
+const context = canvas.getContext("2d", { alpha: false })!;
+context.imageSmoothingEnabled = false;
+
+export const WIDTH = context.canvas.width;
 
 export type GameState = (MainMenu | Game) & { cleanup(): void; render(context: CanvasRenderingContext2D, delta: number): void; };
 
@@ -18,6 +25,7 @@ export const playerControls = [
     { left: "KeyA", right: "KeyD", up: "KeyW", down: "KeyS", primary: "ShiftLeft", secondary: "KeyC" }, { left: "KeyJ", right: "KeyL", up: "KeyI", down: "KeyK", primary: "KeyB", secondary: "Period" }];
 
 export let gameState: GameState = new MainMenu();
+// new Game(new Map(TestMap), [new Brendan("green"), new Callum()]);
 
 let lastFrameTime: number | undefined;
 requestAnimationFrame(function gameLoop() {

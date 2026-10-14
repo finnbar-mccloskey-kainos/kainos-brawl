@@ -128,19 +128,12 @@ main {
   opacity: 0.6;
   transition: all 0.3s ease;
   font-size: calc(7*var(--pixel));
+  transform: scale(0.5);
 }
 
 .help:hover {
+  transform: scale(1.2);
   opacity: 1;
-}
-
-.help:hover .help-table {
-  font-size: calc(7*var(--pixel));
-}
-
-.help-table {
-  transition: all 0.3s ease;
-  font-size: calc(0*var(--pixel));
 }
 
 .help-table,
@@ -149,4 +142,19 @@ main {
   border: var(--pixel) solid black;
   border-collapse: collapse;
   padding: var(--pixel);
+}
+
+.score-bar,
+.blue-score-bar {
+  height: calc(var(--pixel)*4);
+}
+
+.score-bar {
+  width: 100%;
+  background-color: red;
+}
+
+.blue-score-bar {
+  background-color: blue;
+  transition: width 0.3s ease;
 }

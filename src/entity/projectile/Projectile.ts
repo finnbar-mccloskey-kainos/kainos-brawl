@@ -51,7 +51,7 @@ export default class Projectile implements Entity {
                     entity.body.position.y - this.body.position.y,
                     entity.body.position.x - this.body.position.x
                 );
-                entity.attack(this.preset.damage, { x: Math.cos(knockbackAngle) * this.preset.knockback, y: Math.sin(knockbackAngle) * this.preset.knockback }, this.preset.stunTime);
+                entity.attack(this.preset.damage, { x: Math.cos(knockbackAngle) * this.preset.knockback, y: -Math.sin(knockbackAngle) * this.preset.knockback }, this.preset.stunTime);
                 this._shouldDelete = true;
             }
         }
