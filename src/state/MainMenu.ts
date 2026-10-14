@@ -15,6 +15,7 @@ const characterGridColumns = 8;
 export default class MainMenu implements EventListenerObject {
 
     private selections: { number: number, confirmed: boolean; }[] = [{ number: 0, confirmed: false }, { number: 0, confirmed: false }];
+    private gameStarted = false;
 
     constructor() {
         window.addEventListener("keydown", this);
@@ -98,7 +99,8 @@ export default class MainMenu implements EventListenerObject {
             }
         }
 
-        if (this.selections.every(selection => selection.confirmed)) {
+        if (!this.gameStarted && this.selections.every(selection => selection.confirmed)) {
+            this.gameStarted = true;
             emit("stateChange", { oldState: this, newState: new Game(new Map(TestMap), this.selections.map(selection => characters[selection.number])) });
         }
     }

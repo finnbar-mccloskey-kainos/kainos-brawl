@@ -5,10 +5,14 @@ import Player from "../entity/Player";
 import { mouse_pos } from "../main";
 import Character from "../character/Character";
 import Entity from "../entity/Entity";
+import collisionAudioUrl from "../../audio/Collision.wav?url";
 
 export default class Game {
 
     private listeners = [] as { unsubscribe: () => void; }[];
+    private audioContext = new AudioContext();
+    private musicSource?: AudioBufferSourceNode;
+    private cleanedUp = false;
 
     players: Player[] = [];
 
@@ -18,6 +22,8 @@ export default class Game {
         public readonly map: Map,
         characters: Character[]
     ) {
+        void this.playMusic();
+
         this.players = [new Player(this, "Player 1", playerControls[0], characters[0]), new Player(this, "Player 2", playerControls[1], characters[1])];
         this.entities = [...this.players];
 
@@ -39,8 +45,45 @@ export default class Game {
     }
 
     cleanup() {
+        this.cleanedUp = true;
+        this.musicSource?.stop();
+        void this.audioContext.close();
+
         for (let listener of this.listeners) {
             listener.unsubscribe();
+        }
+    }
+
+    private async playMusic() {
+        try {
+            const [response] = await Promise.all([
+                fetch(collisionAudioUrl),
+                this.audioContext.resume(),
+            ]);
+            if (!response.ok) {
+                throw new Error(`Failed to load music: ${response.status}`);
+            }
+
+            const audioBuffer = await this.audioContext.decodeAudioData(await response.arrayBuffer());
+            if (this.cleanedUp) {
+                return;
+            }
+
+            const source = this.audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.loop = true;
+            source.loopStart = 12.54;
+            source.loopEnd = audioBuffer.duration;
+
+            const volume = this.audioContext.createGain();
+            volume.gain.value = 0.5;
+            source.connect(volume);
+            volume.connect(this.audioContext.destination);
+
+            this.musicSource = source;
+            source.start(0, 0);
+        } catch (error) {
+            console.error("Unable to play game music", error);
         }
     }
 
