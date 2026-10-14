@@ -6,7 +6,7 @@ import Body, { REALISTIC_DRAG, REALISTIC_GRAVITY } from "../physics/Body";
 import Game from "../state/Game";
 import boxesOverlap from "../util/boxesOverlap";
 import boxTranslate from "../util/boxTranslate";
-import Attackable from "./Attackable";
+import Attackable, { isAttackable } from "./Attackable";
 import Projectile from "./projectile/Projectile";
 
 export type Control = {
@@ -23,76 +23,150 @@ export type Controls = {
     secondary: Control;
 };
 
+class Normal {
+
+    constructor(private player: Player) { }
+
+    public readonly canAttack = true;
+
+    frame(delta: number) {
+
+        const SPEED = 0.1;
+
+        if (this.player.isControlPressed("left")) {
+            this.player.body.moveHorizontally(-SPEED * delta);
+            this.player.facing = "left";
+        }
+        if (this.player.isControlPressed("right")) {
+            this.player.body.moveHorizontally(SPEED * delta);
+            this.player.facing = "right";
+        }
+        if (this.player.isControlPressed("up") && this.player.body.isOnGround()) {
+            this.player.body.velocity = { x: this.player.body.velocity.x, y: -0.25 };
+        }
+
+        if (this.player.isControlPressed("primary")) {
+            for (const player of this.player.game.players) {
+                if (player === this.player) continue;
+                if (
+                    boxesOverlap(
+                        boxTranslate(
+                            this.player.body.getCollisionBox(),
+                            { x: this.player.facing === "right" ? 20 : -20, y: 0 }
+                        ),
+                        player.body.getCollisionBox()
+                    )
+                ) {
+                    player.attack(10, { x: this.player.facing === "right" ? 0.1 : -0.1, y: -0.1 }, 150);
+                    this.player.state = new Stunned(this.player, 300);
+                }
+            }
+        }
+
+        if (this.player.isControlPressed("secondary") && !this.player.isControlPressed("up") && !this.player.isControlPressed("down")) {
+            const projectile = new Projectile(this.player.game, this.player, this.player.character.projectilePreset);
+            this.player.game.entities.push(projectile);
+            this.player.state = new Stunned(this.player, 500);
+            projectile.body.velocity = { x: this.player.facing === "right" ? 0.3 : -0.3, y: -0.2 };
+        }
+
+        if (this.player.isControlPressed("down") && this.player.isControlPressed("secondary")) {
+            this.player.state = new Downsmashing(this.player);
+        }
+        this.player.body.frame(delta, false);
+
+    }
+
+}
+class Stunned {
+
+    public readonly canAttack = false;
+
+    constructor(public player: Player, public stunTime: number) {
+    }
+
+    frame(delta: number) {
+        if (this.stunTime <= 0) {
+            this.player.state = new Normal(this.player);
+            return;
+        }
+        this.stunTime -= delta;
+        this.player.body.frame(delta, false);
+    }
+
+}
+class Downsmashing {
+
+    private static readonly GRAVITY_MULTIPLIER = 6;
+
+    constructor(public player: Player) {
+        this.player.body.gravity *= Downsmashing.GRAVITY_MULTIPLIER;
+    }
+
+    public readonly canAttack = true;
+
+    frame(delta: number) {
+        this.player.body.frame(delta, true);
+
+        if (this.player.body.velocity.y <= 0.05) {
+            this.player.body.gravity /= Downsmashing.GRAVITY_MULTIPLIER;
+            for (const entity of this.player.game.entities) {
+                if (entity != this.player && isAttackable(entity) && boxesOverlap(
+                    this.player.body.getCollisionBox(),
+                    entity.body.getCollisionBox()
+                )) {
+                    let knockbackAngle = Math.atan2(
+                        entity.body.position.y - this.player.body.position.y,
+                        entity.body.position.x - this.player.body.position.x
+                    );
+                    entity.attack(25, { x: Math.cos(knockbackAngle) * 0.3, y: -0.3 }, 150);
+                }
+            }
+            this.player.state = new Stunned(this.player, 700);
+        }
+    }
+
+}
+
+type PlayerState = (Normal | Stunned | Downsmashing) & { get canAttack(): boolean; frame(delta: number): void; };
+
 export default class Player implements Entity, Attackable {
 
     private _percentage: number = 0;
 
     public facing: "left" | "right" = "right";
 
-    public body: Body;
+    public readonly body: Body;
 
     constructor(
-        private readonly game: Game,
+        public readonly game: Game,
         public readonly name: string,
         public readonly controls: Controls,
         public readonly character: Character
     ) {
+        this._state = new Normal(this);
         this.body = new Body(game, { x: 100, y: 0 }, this.character.collisionBox, { x: 0, y: 0 }, REALISTIC_DRAG, REALISTIC_GRAVITY, () => this.isControlPressed("down"));
     }
 
-    private stunTime: number = 0;
+    private _state: PlayerState;
+
+    get state() {
+        return this._state;
+    }
+
+    set state(value: PlayerState) {
+        this._state = value;
+    }
 
     frame(delta: number) {
-        const SPEED = 0.1;
-        if (this.stunTime > 0) {
-            this.stunTime -= delta;
-            this.body.frame(delta, true);
-        } else {
-            if (this.isControlPressed("left")) {
-                this.body.moveHorizontally(-SPEED * delta);
-                this.facing = "left";
-            }
-            if (this.isControlPressed("right")) {
-                this.body.moveHorizontally(SPEED * delta);
-                this.facing = "right";
-            }
-            if (this.isControlPressed("up") && this.body.isOnGround()) {
-                this.body.velocity = { x: this.body.velocity.x, y: -0.25 };
-            }
-
-            if (this.isControlPressed("primary")) {
-                for (const player of this.game.players) {
-                    if (player === this) continue;
-                    if (
-                        boxesOverlap(
-                            boxTranslate(
-                                this.body.getCollisionBox(),
-                                { x: this.facing === "right" ? 20 : -20, y: 0 }
-                            ),
-                            player.body.getCollisionBox()
-                        )
-                    ) {
-                        player.attack(10, { x: this.facing === "right" ? 0.1 : -0.1, y: -0.1 }, 150);
-                        this.stunTime = 300;
-                    }
-                }
-            }
-
-            if (this.isControlPressed("secondary") && !this.isControlPressed("up") && !this.isControlPressed("down")) {
-                const projectile = new Projectile(this.game, this, this.character.projectilePreset);
-                this.game.entities.push(projectile);
-                this.stunTime = 500;
-                projectile.body.velocity = { x: this.facing === "right" ? 0.3 : -0.3, y: -0.2 };
-            }
-            this.body.frame(delta, false);
-        }
+        this._state.frame(delta);
     }
 
     attack(damage: number, knockback: { x: number, y: number; }, stunTime: number) {
-        if (this.stunTime <= 0) {
+        if (this._state.canAttack) {
             this.percentage += damage;
             this.body.velocity = { x: this.body.velocity.x + knockback.x * (this.percentage / 100), y: this.body.velocity.y + knockback.y * (this.percentage / 100) };
-            this.stunTime = stunTime;
+            this._state = new Stunned(this, stunTime);
         }
     }
 
