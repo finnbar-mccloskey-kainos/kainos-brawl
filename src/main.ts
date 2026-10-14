@@ -6,6 +6,8 @@ import TestMap from "./map/TestMap";
 import Brendan from "./character/Brendan";
 import Callum from "./character/Callum";
 import Map from "./map/Map";
+import { Controls } from "./entity/Player";
+import { setGamepad } from "./input";
 
 export let logo = new Image();
 logo.src = "/logo.png";
@@ -21,14 +23,26 @@ export const WIDTH = context.canvas.width;
 
 export type GameState = (MainMenu | Game) & { cleanup(): void; render(context: CanvasRenderingContext2D, delta: number): void; };
 
-export const playerControls = [
-    { left: "KeyA", right: "KeyD", up: "KeyW", down: "KeyS", primary: "ShiftLeft", secondary: "KeyC" }, { left: "KeyJ", right: "KeyL", up: "KeyI", down: "KeyK", primary: "KeyB", secondary: "Period" }];
+export const playerControls: Controls[] = [
+    { left: { keyboard: "KeyA", controller: { type: "axis", direction: "negative", index: 1 } }, right: { keyboard: "KeyD", controller: { type: "axis", direction: "positive", index: 1 } }, up: { keyboard: "KeyW", controller: { type: "button", index: 15 } }, down: { keyboard: "KeyS", controller: { type: "axis", direction: "negative", index: 0 } }, primary: { keyboard: "ShiftLeft", controller: { type: "button", index: 13 } }, secondary: { keyboard: "KeyC", controller: { type: "button", index: 14 } } },
+    { left: { keyboard: "KeyJ", controller: { type: "axis", direction: "positive", index: 3 } }, right: { keyboard: "KeyL", controller: { type: "axis", direction: "negative", index: 3 } }, up: { keyboard: "KeyI", controller: { type: "button", index: 3 } }, down: { keyboard: "KeyK", controller: { type: "axis", direction: "positive", index: 2 } }, primary: { keyboard: "KeyB", controller: { type: "button", index: 2 } }, secondary: { keyboard: "Period", controller: { type: "button", index: 0 } } },
 
-export let gameState: GameState = new MainMenu();
-// new Game(new Map(TestMap), [new Brendan("green"), new Callum()]);
+    //{ left: "KeyJ", right: "KeyL", up: "KeyI", down: "KeyK", primary: "KeyB", secondary: "Period" }
+];
+
+// export let gameState: GameState = new MainMenu();
+export let gameState: GameState = new Game(new Map(TestMap), [new Brendan("green"), new Callum()]);
 
 let lastFrameTime: number | undefined;
 requestAnimationFrame(function gameLoop() {
+
+    for (let gamepad of navigator.getGamepads()) {
+        if (gamepad) {
+            setGamepad(gamepad);
+            break;
+        }
+    }
+
     const delta = performance.now() - (lastFrameTime ?? performance.now());
     lastFrameTime = performance.now();
 

@@ -1,7 +1,7 @@
 import Character from "../character/Character";
 import Entity from "./Entity";
 import { emit } from "../events";
-import { isKeyPressed } from "../input";
+import { gamepad, isKeyPressed } from "../input";
 import Body, { REALISTIC_DRAG, REALISTIC_GRAVITY } from "../physics/Body";
 import Game from "../state/Game";
 import boxesOverlap from "../util/boxesOverlap";
@@ -9,13 +9,18 @@ import boxTranslate from "../util/boxTranslate";
 import Attackable from "./Attackable";
 import Projectile from "./projectile/Projectile";
 
+export type Control = {
+    keyboard: string;
+    controller: { type: "button", index: number; } | { type: "axis", direction: "positive" | "negative", index: number; };
+};
+
 export type Controls = {
-    left: string,
-    right: string,
-    up: string,
-    down: string;
-    primary: string;
-    secondary: string;
+    left: Control,
+    right: Control,
+    up: Control,
+    down: Control;
+    primary: Control;
+    secondary: Control;
 };
 
 export default class Player implements Entity, Attackable {
@@ -32,7 +37,7 @@ export default class Player implements Entity, Attackable {
         public readonly controls: Controls,
         public readonly character: Character
     ) {
-        this.body = new Body(game, { x: 100, y: 0 }, this.character.collisionBox, { x: 0, y: 0 }, REALISTIC_DRAG, REALISTIC_GRAVITY, controls.down);
+        this.body = new Body(game, { x: 100, y: 0 }, this.character.collisionBox, { x: 0, y: 0 }, REALISTIC_DRAG, REALISTIC_GRAVITY, () => this.isControlPressed("down"));
     }
 
     private stunTime: number = 0;
@@ -43,19 +48,19 @@ export default class Player implements Entity, Attackable {
             this.stunTime -= delta;
             this.body.frame(delta, true);
         } else {
-            if (isKeyPressed(this.controls.left)) {
+            if (this.isControlPressed("left")) {
                 this.body.moveHorizontally(-SPEED * delta);
                 this.facing = "left";
             }
-            if (isKeyPressed(this.controls.right)) {
+            if (this.isControlPressed("right")) {
                 this.body.moveHorizontally(SPEED * delta);
                 this.facing = "right";
             }
-            if (isKeyPressed(this.controls.up) && this.body.isOnGround()) {
+            if (this.isControlPressed("up") && this.body.isOnGround()) {
                 this.body.velocity = { x: this.body.velocity.x, y: -0.25 };
             }
 
-            if (isKeyPressed(this.controls.primary)) {
+            if (this.isControlPressed("primary")) {
                 for (const player of this.game.players) {
                     if (player === this) continue;
                     if (
@@ -73,7 +78,7 @@ export default class Player implements Entity, Attackable {
                 }
             }
 
-            if (isKeyPressed(this.controls.secondary) && !isKeyPressed(this.controls.up) && !isKeyPressed(this.controls.down)) {
+            if (this.isControlPressed("secondary") && !this.isControlPressed("up") && !this.isControlPressed("down")) {
                 const projectile = new Projectile(this.game, this, this.character.projectilePreset);
                 this.game.entities.push(projectile);
                 this.stunTime = 500;
@@ -107,5 +112,31 @@ export default class Player implements Entity, Attackable {
 
     get shouldDelete() {
         return false;
+    }
+
+    isControlPressed(control: keyof typeof this.controls): boolean {
+        if (isKeyPressed(this.controls[control].keyboard)) {
+            return true;
+        }
+
+        if (gamepad) {
+            const controllerControl = this.controls[control].controller;
+            if (controllerControl.type === "button") {
+                if (gamepad.buttons[controllerControl.index].pressed) {
+                    return true;
+                }
+            } else if (controllerControl.type === "axis") {
+                if (controllerControl.direction === "negative") {
+                    console.log("CHECK AXIS 1 is negative", gamepad.axes[controllerControl.index].valueOf());
+                    return gamepad.axes[controllerControl.index].valueOf() < 0;
+                }
+                if (controllerControl.direction === "positive") {
+                    return gamepad.axes[controllerControl.index].valueOf() > 0;
+                }
+
+            }
+        }
+        return false;
+
     }
 }

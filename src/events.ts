@@ -1,5 +1,5 @@
 import type { GameState } from "./main";
-import type Player from "./Player";
+import type Player from "./entity/Player";
 
 const subscriptions: { [K in keyof EventTypes]?: ((data: EventTypes[K]) => void)[] } = {};
 

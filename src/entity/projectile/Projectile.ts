@@ -42,7 +42,7 @@ export default class Projectile implements Entity {
 
         for (const entity of this.game.entities) {
             if (
-                entity != this.source && isAttackable(entity) && dbg(boxesOverlap,
+                entity != this.source && isAttackable(entity) && boxesOverlap(
                     this.body.getCollisionBox(),
                     entity.body.getCollisionBox()
                 )

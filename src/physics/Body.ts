@@ -1,4 +1,3 @@
-import { isKeyPressed } from "../input";
 import Game from "../state/Game";
 
 export const REALISTIC_DRAG = 0.001;
@@ -12,19 +11,16 @@ export default class Body {
         public velocity: { x: number; y: number; } = { x: 0, y: 0 },
         public drag: number = REALISTIC_DRAG,
         public gravity: number = REALISTIC_GRAVITY,
-        public readonly passthroughKey: string | undefined = undefined
+        public readonly shouldPassthrough: (() => boolean) | undefined = undefined
     ) { }
 
     frame(delta: number, noPassthrough = false) {
-
-        console.log(this.position);
-
         let passthrough: boolean;
-        if (this.passthroughKey !== undefined) {
+        if (this.shouldPassthrough !== undefined) {
             if (noPassthrough) {
                 passthrough = false;
             } else {
-                passthrough = isKeyPressed(this.passthroughKey) || this.velocity.y < 0;
+                passthrough = this.shouldPassthrough() || this.velocity.y < 0;
             }
         } else {
             passthrough = false;
