@@ -18,6 +18,7 @@ export type Controls = {
     left: Control,
     right: Control,
     up: Control,
+    menuUp: Control;
     down: Control;
     primary: Control;
     secondary: Control;
@@ -201,7 +202,6 @@ export default class Player implements Entity, Attackable {
                 }
             } else if (controllerControl.type === "axis") {
                 if (controllerControl.direction === "negative") {
-                    console.log("CHECK AXIS 1 is negative", gamepad.axes[controllerControl.index].valueOf());
                     return gamepad.axes[controllerControl.index].valueOf() < 0;
                 }
                 if (controllerControl.direction === "positive") {

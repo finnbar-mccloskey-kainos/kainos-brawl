@@ -8,6 +8,7 @@ import HELP_MESSAGE from "../constants/help.html?raw";
 import Brendan from "../character/Brendan";
 import Simon from "../character/Simon";
 import Callum from "../character/Callum";
+import { gamepad } from "../input";
 
 const characters: Character[] = [new Callum(), new Brendan("yellow"), new Simon("blue")];
 const characterGridColumns = 8;
@@ -44,39 +45,71 @@ export default class MainMenu implements EventListenerObject {
         window.removeEventListener("keydown", this);
     }
 
+    private lastAxisControl: undefined | string;
+    private lastAxisControlTime: number = 0;
+
     render(context: CanvasRenderingContext2D) {
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+        if (gamepad) {
+            for (const [index, controls] of playerControls.entries()) {
+                for (const [action, control] of Object.entries(controls)) {
+                    const controllerControl = control.controller;
+                    if (controllerControl.type === "button") {
+                        if (gamepad.buttons[controllerControl.index].pressed) {
+                            this.handleControl(index, action);
+                        }
+                    } else if (controllerControl.type === "axis") {
+                        if (controllerControl.direction === "negative") {
+                            if (gamepad.axes[controllerControl.index].valueOf() < 0 && (this.lastAxisControl !== action || (new Performance()).now() - this.lastAxisControlTime > 200)) {
+                                this.handleControl(index, action);
+                            }
+                        }
+                        if (controllerControl.direction === "positive" && (this.lastAxisControl !== action || (new Performance()).now() - this.lastAxisControlTime > 200)) {
+                            return gamepad.axes[controllerControl.index].valueOf() > 0;
+                        }
+                    }
+                }
+
+            }
+        }
+
     }
 
     handleEvent(event: Event) {
         if (event instanceof KeyboardEvent) {
             for (const [index, controls] of playerControls.entries()) {
                 for (const [action, key] of Object.entries(controls)) {
-                    if (event.code === key) {
-                        if (this.selections[index].confirmed) {
-                            if (action === "primary" || action === "secondary") {
-                                this.selections[index].confirmed = false;
-                            }
-                        } else {
-                            if (action === "left" && this.selections[index].number > 0) {
-                                this.selections[index].number--;
-                            } else if (action === "right" && this.selections[index].number < characters.length - 1) {
-                                this.selections[index].number++;
-                            } else if (action === "up" && this.selections[index].number >= characterGridColumns) {
-                                this.selections[index].number -= characterGridColumns;
-                            } else if (action === "down" && this.selections[index].number < characters.length - characterGridColumns) {
-                                this.selections[index].number += characterGridColumns;
-                            } else if (action === "primary") {
-                                this.selections[index].confirmed = true;
-                            } else {
-                                continue;
-                            }
-                        }
+                    if (event.code === key.keyboard) {
+
+                        this.handleControl(index, action);
+
+                        break;
                     }
-                    this.refreshCharacterSelection();
                 }
             }
         }
+    }
+
+    handleControl(index: number, action: string) {
+        if (this.selections[index].confirmed) {
+            if (action === "primary" || action === "secondary") {
+                this.selections[index].confirmed = false;
+            }
+        } else {
+            if (action === "left" && this.selections[index].number > 0) {
+                this.selections[index].number--;
+            } else if (action === "right" && this.selections[index].number < characters.length - 1) {
+                this.selections[index].number++;
+            } else if (action === "menuUp" && this.selections[index].number >= characterGridColumns) {
+                this.selections[index].number -= characterGridColumns;
+            } else if (action === "down" && this.selections[index].number < characters.length - characterGridColumns) {
+                this.selections[index].number += characterGridColumns;
+            } else if (action === "primary") {
+                this.selections[index].confirmed = true;
+            }
+        }
+        this.refreshCharacterSelection();
     }
 
     refreshCharacterSelection() {

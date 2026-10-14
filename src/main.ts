@@ -42,6 +42,9 @@ export const playerControls: Controls[] = [
                 type: "button", index: 15
             }
         },
+        menuUp: {
+            keyboard: "KeyW", controller: { type: "axis", direction: "positive", index: 0 }
+        },
         down: {
             keyboard: "KeyS",
             controller: { type: "axis", direction: "negative", index: 0 }
@@ -68,6 +71,10 @@ export const playerControls: Controls[] = [
             keyboard: "KeyI",
             controller: { type: "button", index: 3 }
         },
+        menuUp: {
+            keyboard: "KeyI",
+            controller: { type: "axis", direction: "negative", index: 2 }
+        },
         down: {
             keyboard: "KeyK",
             controller: { type: "axis", direction: "positive", index: 2 }
@@ -81,12 +88,10 @@ export const playerControls: Controls[] = [
             controller: { type: "button", index: 0 }
         }
     },
-
-    //{ left: "KeyJ", right: "KeyL", up: "KeyI", down: "KeyK", primary: "KeyB", secondary: "Period" }
 ];
 
-// export let gameState: GameState = new MainMenu();
-export let gameState: GameState = new Game(new Map(TestMap), [new Brendan("green"), new Callum()]);
+export let gameState: GameState = new MainMenu();
+// export let gameState: GameState = new Game(new Map(TestMap), [new Brendan("green"), new Callum()]);
 
 let lastFrameTime: number | undefined;
 requestAnimationFrame(function gameLoop() {
