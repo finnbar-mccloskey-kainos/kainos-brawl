@@ -5,4 +5,5 @@ export default interface ProjectilePreset {
     get maxLifetime(): number;
     get drag(): number;
     get gravity(): number;
+    get image(): string;
 }

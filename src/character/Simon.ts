@@ -30,7 +30,24 @@ export default class Simon implements Character {
             gravity: 0.0003,
             knockback: 0.03,
             maxLifetime: 2000,
-            stunTime: 300
+            stunTime: 300,
+            image: "characters/simon/face.jpeg"
         };
+    }
+
+    get primaryAttackKnockback(): { x: number; y: number; } {
+        return { x: 0.03, y: 0.03 };
+    }
+
+    get primaryAttackStrength(): number {
+        return 10;
+    }
+
+    get downsmashKnockback(): number {
+        return 0.3;
+    }
+
+    get downsmashStrength(): number {
+        return 20;
     }
 }

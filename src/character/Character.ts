@@ -8,5 +8,11 @@ export default interface Character {
 
     get projectilePreset(): ProjectilePreset;
 
+    get primaryAttackStrength(): number;
+    get primaryAttackKnockback(): { x: number, y: number; };
+
+    get downsmashStrength(): number;
+    get downsmashKnockback(): number;
+
     render(state: PlayerState, context: CanvasRenderingContext2D, position: { x: number, y: number; }, facing: "left" | "right"): void;
 }

@@ -8,6 +8,7 @@ import boxesOverlap from "../util/boxesOverlap";
 import boxTranslate from "../util/boxTranslate";
 import Attackable, { isAttackable } from "./Attackable";
 import Projectile from "./projectile/Projectile";
+import increase from "../util/increase";
 
 export type Control = {
     keyboard: string;
@@ -38,8 +39,6 @@ const SHIELD_REGEN_PER_SECOND = 4.8;
 const SHIELD_DAMAGE_MULTIPLIER = 1.19;
 const SHIELD_BREAK_LAUNCH_VELOCITY = -0.18;
 const SHIELD_BREAK_STUN_DURATION = 2500;
-const DOWNSMASH_ACTIVE_FRAMES = 6;
-const DOWNSMASH_HITBOX_WIDTH = 54;
 const STALE_MOVE_REDUCTORS = [0.09, 0.08545, 0.07635, 0.0679, 0.05945, 0.05035, 0.04255, 0.03345, 0.025];
 
 class Normal {
@@ -84,7 +83,17 @@ class Normal {
                 if (
                     boxesOverlap(attackHitbox, player.body.getCollisionBox())
                 ) {
-                    this.player.attackWithStaling(player, "primary", 7, { x: this.player.facing === "right" ? 0.1 : -0.1, y: -0.1 }, 150, 3);
+                    this.player.attackWithStaling(
+                        player,
+                        "primary",
+                        this.player.character.primaryAttackStrength,
+                        {
+                            x: this.player.character.primaryAttackKnockback.x
+                                * (this.player.facing === "right" ? 1 : -1),
+                            y: this.player.character.primaryAttackKnockback.y
+                        },
+                        150,
+                        3);
                     this.player.state = new Stunned(this.player, 500);
                 }
             }
@@ -117,9 +126,8 @@ export class Stunned {
 }
 
 class Downsmashing {
+
     private startTime: number;
-    private hitEntities = new Set<Entity>();
-    private activeFrames = 0;
 
     constructor(public player: Player) {
         this.startTime = Date.now();
@@ -128,44 +136,43 @@ class Downsmashing {
     public readonly canAttack = true;
 
     frame(delta: number) {
+        const previousY = this.player.body.position.y;
+        this.player.body.velocity.y = 0.3;
         this.player.body.frame(delta);
-        const grounded = this.player.body.isOnGround();
-        if (!grounded) {
-            this.player.body.velocity.y = 0.3;
-        }
 
-        if (this.activeFrames < DOWNSMASH_ACTIVE_FRAMES) {
-            this.activeFrames++;
-            const duration = Date.now() - this.startTime;
-            const multiplier = Math.min(duration / 500, 1);
-            const hitbox = this.player.downsmashHitbox!;
-            this.player.addAttackDebugHitbox(hitbox);
-            for (const entity of this.player.game.entities) {
-                if (entity === this.player || this.hitEntities.has(entity) || !isAttackable(entity)) continue;
-                if (!boxesOverlap(hitbox, entity.body.getCollisionBox())) continue;
+        const hitbox = increase(this.player.body.getCollisionBox(), 20);
+        // Body resolves horizontal movement first, then vertical movement.
+        hitbox.topLeft.y = Math.min(hitbox.topLeft.y, previousY - this.player.body.collisionBoxSize.height - 20);
+        hitbox.bottomRight.y = Math.max(hitbox.bottomRight.y, previousY + 20);
+        this.player.addAttackDebugHitbox(hitbox);
 
-                const knockbackAngle = Math.atan2(
+        let attacked = false;
+
+        const multiplier = (Date.now() - this.startTime) / 200;
+        console.log(multiplier);
+
+        for (const entity of this.player.game.entities) {
+            if (entity != this.player && isAttackable(entity) && boxesOverlap(
+                hitbox,
+                entity.body.getCollisionBox()
+            )) {
+                let knockbackAngle = Math.atan2(
                     entity.body.position.y - this.player.body.position.y,
                     entity.body.position.x - this.player.body.position.x
                 );
-                const hit = this.player.attackWithStaling(
-                    entity,
-                    "down-smash",
-                    25 * multiplier,
-                    { x: Math.cos(knockbackAngle) * 0.3 * multiplier, y: -0.3 * multiplier },
-                    150
-                );
-                if (hit) {
-                    this.hitEntities.add(entity);
-                }
+
+                const hit = this.player.attackWithStaling(entity, "downsmash", multiplier * this.player.character.downsmashStrength, { x: Math.cos(knockbackAngle) * this.player.character.downsmashKnockback * multiplier, y: -this.player.character.downsmashKnockback * multiplier }, 150);
+                attacked = attacked || hit;
             }
         }
 
-        if (this.activeFrames >= DOWNSMASH_ACTIVE_FRAMES) {
+        if (this.player.body.isOnGround() || attacked) {
             this.player.state = new Stunned(this.player, 700);
         }
     }
+
 }
+
 
 class ShieldBroken {
     public readonly canAttack = false;
@@ -248,16 +255,7 @@ export default class Player implements Entity, Attackable {
             return undefined;
         }
 
-        if (!this.body.isOnGround()) {
-            return this.body.getCollisionBox();
-        }
-
-        const position = this.body.position;
-        const bodyWidth = this.body.collisionBoxSize.width;
-        return {
-            topLeft: { x: position.x + (bodyWidth - DOWNSMASH_HITBOX_WIDTH) / 2, y: position.y - this.body.collisionBoxSize.height },
-            bottomRight: { x: position.x + (bodyWidth + DOWNSMASH_HITBOX_WIDTH) / 2, y: position.y },
-        };
+        return increase(this.body.getCollisionBox(), 20);
     }
 
     getStaleDamageMultiplier(move: string) {
