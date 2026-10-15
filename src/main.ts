@@ -2,10 +2,6 @@ import "./style.css";
 import MainMenu from "./state/MainMenu";
 import Game from "./state/Game";
 import { emit, listen } from "./events";
-import TestMap from "./map/TestMap";
-import Brendan from "./character/Brendan";
-import Callum from "./character/Callum";
-import Map from "./map/Map";
 import { Controls } from "./entity/Player";
 import { setGamepad } from "./input";
 import WinScreen from "./state/WinScreen";
@@ -57,6 +53,10 @@ export const playerControls: Controls[] = [
         secondary: {
             keyboard: "KeyC",
             controller: { type: "button", index: 14 }
+        },
+        shield: {
+            keyboard: "KeyE",
+            controller: { type: "button", index: 12 }
         }
     },
     {
@@ -87,6 +87,10 @@ export const playerControls: Controls[] = [
         secondary: {
             keyboard: "Period",
             controller: { type: "button", index: 0 }
+        },
+        shield: {
+            keyboard: "KeyU",
+            controller: { type: "button", index: 1 }
         }
     },
 ];
