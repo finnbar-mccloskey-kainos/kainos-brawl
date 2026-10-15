@@ -8,6 +8,7 @@ import Callum from "./character/Callum";
 import Map from "./map/Map";
 import { Controls } from "./entity/Player";
 import { setGamepad } from "./input";
+import WinScreen from "./state/WinScreen";
 
 export let logo = new Image();
 logo.src = "/logo.png";
@@ -21,7 +22,7 @@ context.imageSmoothingEnabled = false;
 
 export const WIDTH = context.canvas.width;
 
-export type GameState = (MainMenu | Game) & { cleanup(): void; render(context: CanvasRenderingContext2D, delta: number): void; };
+export type GameState = (MainMenu | Game | WinScreen) & { cleanup(): void; render(context: CanvasRenderingContext2D, delta: number): void; };
 
 export const playerControls: Controls[] = [
     {

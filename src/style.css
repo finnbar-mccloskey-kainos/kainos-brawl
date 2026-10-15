@@ -305,3 +305,22 @@ main {
   transform: translateX(-50%);
   pointer-events: none;
 }
+
+.win-screen {
+  color: white;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-direction: column;
+  height: 100%;
+  font-size: calc(var(--pixel)*14);
+}
+
+.button {
+  background-color: greenyellow;
+  border: var(--pixel) solid black;
+  padding: calc(var(--pixel)*2);
+  cursor: pointer;
+  font-family: "Kiwi Soda", sans-serif;
+  font-size: calc(var(--pixel)*14);
+}

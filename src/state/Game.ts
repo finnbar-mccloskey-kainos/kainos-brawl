@@ -1,4 +1,4 @@
-import { listen } from "../events";
+import { emit, listen } from "../events";
 import { DEBUG, playerControls } from "../main";
 import Map from "../map/Map";
 import Player from "../entity/Player";
@@ -6,6 +6,7 @@ import { mouse_pos } from "../main";
 import Character from "../character/Character";
 import Entity from "../entity/Entity";
 import collisionAudioUrl from "../../audio/Collision.wav?url";
+import WinScreen from "./WinScreen";
 
 export default class Game {
 
@@ -14,6 +15,7 @@ export default class Game {
     private musicSource?: AudioBufferSourceNode;
     private currentAnimationInterval?: number;
     private cleanedUp = false;
+    private over = false;
 
     players: Player[] = [];
 
@@ -249,6 +251,9 @@ export default class Game {
     }
 
     render(context: CanvasRenderingContext2D, delta: number) {
+        if (this.over) {
+            return;
+        }
 
         if (this.map.background) {
             context.drawImage(this.map.background, 0, 0, context.canvas.width, context.canvas.height);
@@ -256,45 +261,45 @@ export default class Game {
 
         for (let entity of this.entities) {
             entity.frame(delta);
-        }
 
-        for (let entity of this.entities) {
-            entity.render(context);
-            if (entity instanceof Player) {
-                if (entity === this.players[0]) {
-                    context.fillStyle = "blue";
-                } else if (entity === this.players[1]) {
-                    context.fillStyle = "red";
-                }
-                context.font = "15px \"Kiwi Soda\"";
-                context.fillText(
-                    "v",
-                    entity.body.position.x + (entity.body.collisionBoxSize.width / 3),
-                    entity.body.position.y - 5 - entity.body.collisionBoxSize.height,
-                );
+            const BOUNDS = 100;
 
-                if (entity.isChargingProjectile) {
-                    const meterWidth = 20;
-                    const meterHeight = 3;
-                    const meterX = entity.body.position.x + (entity.body.collisionBoxSize.width - meterWidth) / 2;
-                    const meterY = entity.body.position.y - entity.body.collisionBoxSize.height - 25;
-
-                    context.fillStyle = "#240a10";
-                    context.fillRect(meterX, meterY, meterWidth, meterHeight);
-                    context.fillStyle = "#f04452";
-                    context.fillRect(meterX, meterY, meterWidth * entity.projectileChargeRatio, meterHeight);
-                    context.strokeStyle = "#ffe4c7";
-                    context.lineWidth = 1;
-                    context.strokeRect(meterX, meterY, meterWidth, meterHeight);
+            if (entity.body.position.x < -BOUNDS || entity.body.position.y < -BOUNDS || entity.body.position.x > context.canvas.width + BOUNDS || entity.body.position.y > context.canvas.height + BOUNDS) {
+                if (entity instanceof Player) {
+                    const winner = this.players.find(p => p !== entity)!;
+                    console.log("TODO: play death sound");
+                    this.over = true;
+                    setTimeout(() => {
+                        emit("stateChange", { oldState: this, newState: new WinScreen(winner) });
+                    }, 1000);
+                } else {
+                    this.entities = this.entities.filter(e => e !== entity);
                 }
             }
-        }
 
-        this.entities = this.entities.filter(entity => !entity.shouldDelete);
+            for (let entity of this.entities) {
+                entity.render(context);
+                if (entity instanceof Player) {
+                    if (entity === this.players[0]) {
+                        context.fillStyle = "blue";
+                    } else if (entity === this.players[1]) {
+                        context.fillStyle = "red";
+                    }
+                    context.font = "15px \"Kiwi Soda\"";
+                    context.fillText(
+                        "v",
+                        entity.body.position.x + (entity.body.collisionBoxSize.width / 3),
+                        entity.body.position.y - 5 - entity.body.collisionBoxSize.height,
+                    );
+                }
+            }
 
-        if (DEBUG) {
-            context.fillStyle = "blue";
-            context.fillRect(mouse_pos.x, mouse_pos.y, 1, 1);
+            this.entities = this.entities.filter(entity => !entity.shouldDelete);
+
+            if (DEBUG) {
+                context.fillStyle = "blue";
+                context.fillRect(mouse_pos.x, mouse_pos.y, 1, 1);
+            }
         }
     }
 
