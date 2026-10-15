@@ -21,16 +21,16 @@ export default class Projectile implements Entity {
         private readonly game: Game,
         public readonly source: Entity,
         public preset: ProjectilePreset,
+        private readonly image: HTMLImageElement,
         private readonly staleDamageMultiplier = 1,
         private readonly onHit?: (hitShield: boolean) => void,
         private readonly chargeDamageMultiplier = 1,
     ) {
-        this.body = new Body(game, { ...source.body.position }, { width: 10, height: 10 });
+        this.body = new Body(game, { ...source.body.position }, { width: image.width, height: image.height });
     }
 
     render(context: CanvasRenderingContext2D): void {
-        context.fillStyle = "red";
-        context.fillRect(this.body.position.x, this.body.position.y - this.body.collisionBoxSize.height, this.body.collisionBoxSize.width, this.body.collisionBoxSize.height);
+        context.drawImage(this.image, this.body.position.x, this.body.position.y - this.body.collisionBoxSize.height, this.body.collisionBoxSize.width, this.body.collisionBoxSize.height);
     }
 
     frame(delta: number) {

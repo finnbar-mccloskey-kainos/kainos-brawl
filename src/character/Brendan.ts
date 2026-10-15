@@ -30,7 +30,7 @@ export default class Brendan implements Character {
             gravity: 0.0003,
             knockback: 0.3,
             maxLifetime: 2000,
-            image: "characters/simon/face.jpeg",
+            image: "Items/Eggy.png",
             stunTime: 300,
         };
     }

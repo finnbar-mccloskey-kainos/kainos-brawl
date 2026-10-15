@@ -207,6 +207,8 @@ export default class Player implements Entity, Attackable {
 
     public facing: "left" | "right" = "right";
 
+    private projectileIcon: HTMLImageElement;
+
     public readonly body: Body;
     private _state: PlayerState;
     private airJumpUsed = false;
@@ -292,6 +294,8 @@ export default class Player implements Entity, Attackable {
         public readonly controls: Controls,
         public readonly character: Character
     ) {
+        this.projectileIcon = new Image();
+        this.projectileIcon.src = this.character.projectilePreset.image;
         this._state = new Normal(this);
         this.body = new Body(game, { x: 100, y: 0 }, this.character.collisionBox, { x: 0, y: 0 }, REALISTIC_DRAG, REALISTIC_GRAVITY, () => this.isControlPressed("down"), LANDING_FRICTION_DURATION);
     }
@@ -452,6 +456,7 @@ export default class Player implements Entity, Attackable {
             this.game,
             this,
             this.character.projectilePreset,
+            this.projectileIcon,
             this.getStaleDamageMultiplier("projectile"),
             hitShield => this.recordStaleMove("projectile", hitShield),
             1 + chargeRatio

@@ -48,7 +48,7 @@ export default class Callum implements Character {
             knockback: 0.3,
             maxLifetime: 2000,
             stunTime: 300,
-            image: "characters/simon/face.jpeg"
+            image: "Items/Eggy.png"
         };
     }
 
