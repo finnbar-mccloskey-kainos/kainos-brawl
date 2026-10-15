@@ -149,7 +149,6 @@ class Downsmashing {
         let attacked = false;
 
         const multiplier = (Date.now() - this.startTime) / 200;
-        console.log(multiplier);
 
         for (const entity of this.player.game.entities) {
             if (entity != this.player && isAttackable(entity) && boxesOverlap(
