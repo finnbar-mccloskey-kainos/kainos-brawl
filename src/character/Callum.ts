@@ -3,7 +3,12 @@ import Character from "./Character";
 
 export default class Callum implements Character {
 
-    constructor() { }
+    private readonly sprite = new Image();
+
+    constructor() {
+        this.sprite.onerror = () => console.error("Failed to load Callum sprite: characters/callum/testsprite.png");
+        this.sprite.src = "characters/callum/testsprite.png";
+    }
 
     get name(): string {
         return "Callum";
@@ -18,9 +23,16 @@ export default class Callum implements Character {
     }
 
     render(context: CanvasRenderingContext2D, position: { x: number, y: number; }, facing: "left" | "right"): void {
-        context.fillStyle = "green";
-        context.fillRect(Math.trunc(position.x), Math.trunc(position.y), 20, -35);
-        context.fillRect(Math.trunc(position.x + 20), Math.trunc(position.y - 10), facing === "right" ? 20 : -40, 1);
+        if (this.sprite.complete && this.sprite.naturalWidth > 0) {
+            context.save();
+            context.translate(
+                Math.trunc(position.x) + (facing === "left" ? this.sprite.naturalWidth : 0),
+                Math.trunc(position.y) - this.sprite.naturalHeight
+            );
+            context.scale(facing === "left" ? -1 : 1, 1);
+            context.drawImage(this.sprite, 0, 0);
+            context.restore();
+        }
     }
 
     get projectilePreset(): ProjectilePreset {

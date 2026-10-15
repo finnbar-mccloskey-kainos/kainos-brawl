@@ -44,10 +44,10 @@ main {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  flex-direction: column;
+  flex-direction: row;
   width: 100%;
   height: 100%;
-  background-image: url("/office outside.png");
+  background-image: url("/menu.jpg");
   background-size: cover;
   background-position: center;
 }
@@ -66,6 +66,11 @@ main {
 .character-list {
   display: flex;
   flex-wrap: wrap;
+  position: relative;
+  top: calc(7*var(--pixel));
+  left: calc(5*var(--pixel));
+  margin-left: auto;
+  padding: calc(5*var(--pixel));
 }
 
 .character {
@@ -78,6 +83,7 @@ main {
   margin: calc(var(--pixel));
   font-size: calc(10*var(--pixel));
   --selection: gray;
+  border: var(--pixel) solid black;
 }
 
 .character-icon {
@@ -122,15 +128,27 @@ main {
 }
 
 .help {
+  --edge-gap: calc(5*var(--pixel));
+  --hover-scale: 1.2;
+  position: absolute;
+  bottom: var(--edge-gap);
+  left: 50%;
+  box-sizing: border-box;
+  max-width: calc((100% - 5*var(--edge-gap)) / var(--hover-scale));
+  max-height: calc((100% - 2*var(--edge-gap)) / var(--hover-scale));
+  overflow: auto;
   background: white;
   border: var(--pixel) solid black;
   padding: var(--pixel);
   opacity: 0.6;
   transition: all 0.3s ease;
   font-size: calc(7*var(--pixel));
+  transform-origin: bottom center;
+  transform: translateX(-50%) scale(0.5);
 }
 
 .help:hover {
+  transform: translateX(-50%) scale(var(--hover-scale));
   opacity: 1;
 }
 

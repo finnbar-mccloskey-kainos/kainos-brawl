@@ -1,6 +1,6 @@
 import Character from "../character/Character";
 import { emit } from "../events";
-import { logo, playerControls } from "../main";
+import { playerControls } from "../main";
 import Map from "../map/Map";
 import TestMap from "../map/TestMap";
 import Game from "./Game";
@@ -37,7 +37,7 @@ export default class MainMenu implements EventListenerObject {
         const help = document.createElement("div");
         help.className = "help";
         help.innerHTML = HELP_MESSAGE.replace("\n", "\r\n");
-        mainMenu.replaceChildren(logo, characterList, help);
+        mainMenu.replaceChildren(help, characterList);
         document.getElementById("ui")?.replaceChildren(mainMenu);
     }
 

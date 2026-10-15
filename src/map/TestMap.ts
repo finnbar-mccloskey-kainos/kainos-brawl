@@ -1,7 +1,7 @@
 import MapData from "./MapData";
 
 export default {
-    background: "testmap.png",
+    background: "officebg.jpg",
     platforms: [
         {
             topLeft: { x: 22, y: 160 },
