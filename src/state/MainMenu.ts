@@ -52,7 +52,7 @@ export default class MainMenu implements EventListenerObject {
         if (event instanceof KeyboardEvent) {
             for (const [index, controls] of playerControls.entries()) {
                 for (const [action, key] of Object.entries(controls)) {
-                    if (event.code === key) {
+                    if (event.code === key.keyboard) {
                         if (this.selections[index].confirmed) {
                             if (action === "primary" || action === "secondary") {
                                 this.selections[index].confirmed = false;
