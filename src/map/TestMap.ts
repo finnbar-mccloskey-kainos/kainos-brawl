@@ -4,26 +4,20 @@ export default {
     background: "officebg.jpg",
     platforms: [
         {
-            topLeft: { x: 22, y: 160 },
-            bottomRight: { x: 330, y: 160 },
+            topLeft: { x: 20, y: 182 },
+            bottomRight: { x: 332, y: 182 },
             passthrough: false
         },
 
         {
-            topLeft: { x: 40, y: 100 },
-            bottomRight: { x: 118, y: 100 },
+            topLeft: { x: 20, y: 114 },
+            bottomRight: { x: 332, y: 114 },
             passthrough: true,
         },
 
         {
-            topLeft: { x: 136, y: 54 },
-            bottomRight: { x: 214, y: 65 },
-            passthrough: true,
-        },
-
-        {
-            topLeft: { x: 226, y: 97 },
-            bottomRight: { x: 304, y: 97 },
+            topLeft: { x: 20, y: 45 },
+            bottomRight: { x: 332, y: 45 },
             passthrough: true,
         }
     ]

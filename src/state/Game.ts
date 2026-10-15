@@ -5,6 +5,7 @@ import Player from "../entity/Player";
 import { mouse_pos } from "../main";
 import Character from "../character/Character";
 import Entity from "../entity/Entity";
+import Projectile from "../entity/projectile/Projectile";
 import collisionAudioUrl from "../../audio/Collision.wav?url";
 import WinScreen from "./WinScreen";
 
@@ -31,21 +32,20 @@ export default class Game {
         this.players[1].facing = "left";
         this.entities = [...this.players];
 
-        const platformEdges = this.map.data.platforms.flatMap(platform => [platform.topLeft.x, platform.bottomRight.x]);
-        const mapWidth = Math.max(...platformEdges) - Math.min(...platformEdges);
-        const sidePlatforms = this.map.data.platforms
-            .filter(platform => platform.bottomRight.x - platform.topLeft.x < mapWidth / 2)
-            .sort((left, right) => left.topLeft.x - right.topLeft.x);
+        const spawnPlatform = this.map.data.platforms
+            .filter(platform => !platform.passthrough)
+            .sort((left, right) => right.topLeft.y - left.topLeft.y)[0];
 
-        if (sidePlatforms.length >= 2) {
-            const spawnPlatforms = [sidePlatforms[0], sidePlatforms[sidePlatforms.length - 1]];
-            for (const [index, platform] of spawnPlatforms.entries()) {
-                const player = this.players[index];
-                player.body.position = {
-                    x: (platform.topLeft.x + platform.bottomRight.x - player.body.collisionBoxSize.width) / 2,
-                    y: platform.topLeft.y + player.body.collisionBoxSize.height + 1,
-                };
-            }
+        if (spawnPlatform) {
+            const edgeInset = 12;
+            this.players[0].body.position = {
+                x: spawnPlatform.topLeft.x + edgeInset,
+                y: spawnPlatform.topLeft.y,
+            };
+            this.players[1].body.position = {
+                x: spawnPlatform.bottomRight.x - this.players[1].body.collisionBoxSize.width - edgeInset,
+                y: spawnPlatform.topLeft.y,
+            };
         }
 
         const scoreBar = document.createElement("div");
@@ -278,6 +278,44 @@ export default class Game {
             }
 
             for (let entity of this.entities) {
+                if (DEBUG && entity instanceof Player) {
+                    const playerHitbox = entity.body.getCollisionBox();
+                    context.strokeStyle = "#36f1b2";
+                    context.lineWidth = 1;
+                    context.strokeRect(
+                        playerHitbox.topLeft.x,
+                        playerHitbox.topLeft.y,
+                        playerHitbox.bottomRight.x - playerHitbox.topLeft.x,
+                        playerHitbox.bottomRight.y - playerHitbox.topLeft.y
+                    );
+
+                    for (const hitbox of entity.attackDebugHitboxes) {
+                        context.fillStyle = "rgba(255, 140, 0, 0.3)";
+                        context.fillRect(
+                            hitbox.topLeft.x,
+                            hitbox.topLeft.y,
+                            hitbox.bottomRight.x - hitbox.topLeft.x,
+                            hitbox.bottomRight.y - hitbox.topLeft.y
+                        );
+                        context.strokeStyle = "#ff8c00";
+                        context.strokeRect(
+                            hitbox.topLeft.x,
+                            hitbox.topLeft.y,
+                            hitbox.bottomRight.x - hitbox.topLeft.x,
+                            hitbox.bottomRight.y - hitbox.topLeft.y
+                        );
+                    }
+                } else if (DEBUG && entity instanceof Projectile) {
+                    const hitbox = entity.body.getCollisionBox();
+                    context.strokeStyle = "#ff8c00";
+                    context.lineWidth = 1;
+                    context.strokeRect(
+                        hitbox.topLeft.x,
+                        hitbox.topLeft.y,
+                        hitbox.bottomRight.x - hitbox.topLeft.x,
+                        hitbox.bottomRight.y - hitbox.topLeft.y
+                    );
+                }
                 entity.render(context);
                 if (entity instanceof Player) {
                     if (entity === this.players[0]) {
@@ -291,6 +329,21 @@ export default class Game {
                         entity.body.position.x + (entity.body.collisionBoxSize.width / 3),
                         entity.body.position.y - 5 - entity.body.collisionBoxSize.height,
                     );
+
+                    if (entity.isChargingProjectile) {
+                        const meterWidth = 20;
+                        const meterHeight = 3;
+                        const meterX = entity.body.position.x + (entity.body.collisionBoxSize.width - meterWidth) / 2;
+                        const meterY = entity.body.position.y - entity.body.collisionBoxSize.height - 25;
+
+                        context.fillStyle = "#240a10";
+                        context.fillRect(meterX, meterY, meterWidth, meterHeight);
+                        context.fillStyle = "#f04452";
+                        context.fillRect(meterX, meterY, meterWidth * entity.projectileChargeRatio, meterHeight);
+                        context.strokeStyle = "#ffe4c7";
+                        context.lineWidth = 1;
+                        context.strokeRect(meterX, meterY, meterWidth, meterHeight);
+                    }
                 }
             }
 
