@@ -23,6 +23,13 @@ export type Controls = {
     secondary: Control;
 };
 
+const CONTROLLER_DEADZONE = 0.15;
+const MAX_JUMP_HOLD_DURATION = 280;
+const HELD_JUMP_GRAVITY_SCALE = 0.45;
+const SHORT_HOP_VELOCITY_SCALE = 0.45;
+const LANDING_FRICTION_DURATION = 120;
+const MAX_PROJECTILE_CHARGE_DURATION = 3000;
+
 export default class Player implements Entity, Attackable {
 
     private _percentage: number = 0;
@@ -37,27 +44,103 @@ export default class Player implements Entity, Attackable {
         public readonly controls: Controls,
         public readonly character: Character
     ) {
-        this.body = new Body(game, { x: 100, y: 0 }, this.character.collisionBox, { x: 0, y: 0 }, REALISTIC_DRAG, REALISTIC_GRAVITY, () => this.isControlPressed("down"));
+        this.body = new Body(game, { x: 100, y: 0 }, this.character.collisionBox, { x: 0, y: 0 }, REALISTIC_DRAG, REALISTIC_GRAVITY, () => this.isControlPressed("down"), LANDING_FRICTION_DURATION);
     }
 
     private stunTime: number = 0;
+    private airJumpUsed = false;
+    private jumpHeldLastFrame = false;
+    private jumpHoldDuration = 0;
+    private chargingProjectile = false;
+    private projectileChargeDuration = 0;
+    private secondaryHeldLastFrame = false;
+
+    get isChargingProjectile() {
+        return this.chargingProjectile;
+    }
+
+    get projectileChargeRatio() {
+        return this.projectileChargeDuration / MAX_PROJECTILE_CHARGE_DURATION;
+    }
+
+    private fireProjectile(chargeRatio: number) {
+        const projectile = new Projectile(this.game, this, this.character.projectilePreset);
+        projectile.body.position = {
+            x: this.facing === "right"
+                ? this.body.position.x + this.body.collisionBoxSize.width
+                : this.body.position.x - projectile.body.collisionBoxSize.width,
+            y: this.body.position.y - 5,
+        };
+        projectile.body.gravity *= 1 - chargeRatio;
+        projectile.body.velocity = {
+            x: this.facing === "right" ? 0.3 : -0.3,
+            y: -0.2 * (1 - chargeRatio),
+        };
+        this.game.entities.push(projectile);
+        this.stunTime = 500;
+    }
 
     frame(delta: number) {
         const SPEED = 0.1;
+        const secondaryHeld = this.isControlPressed("secondary");
+        const secondaryPressed = secondaryHeld && !this.secondaryHeldLastFrame;
+        const secondaryReleased = !secondaryHeld && this.secondaryHeldLastFrame;
+        this.secondaryHeldLastFrame = secondaryHeld;
+        const jumpHeld = this.isControlPressed("up");
+        const jumpPressed = jumpHeld && !this.jumpHeldLastFrame;
+        const jumpReleased = !jumpHeld && this.jumpHeldLastFrame;
+        this.jumpHeldLastFrame = jumpHeld;
+        const grounded = this.body.isOnGround();
+
+        if (grounded) {
+            this.airJumpUsed = false;
+        }
+
+        if (!this.chargingProjectile && secondaryPressed && this.stunTime <= 0) {
+            this.chargingProjectile = true;
+            this.projectileChargeDuration = 0;
+        }
+
+        if (this.chargingProjectile) {
+            if (secondaryHeld && this.stunTime <= 0) {
+                this.projectileChargeDuration = Math.min(
+                    MAX_PROJECTILE_CHARGE_DURATION,
+                    this.projectileChargeDuration + delta
+                );
+                if (this.projectileChargeDuration >= MAX_PROJECTILE_CHARGE_DURATION) {
+                    this.fireProjectile(1);
+                    this.chargingProjectile = false;
+                    this.projectileChargeDuration = 0;
+                }
+            } else if (secondaryReleased) {
+                if (this.stunTime <= 0) {
+                    this.fireProjectile(this.projectileChargeRatio);
+                }
+                this.chargingProjectile = false;
+                this.projectileChargeDuration = 0;
+            }
+        }
+
         if (this.stunTime > 0) {
             this.stunTime -= delta;
             this.body.frame(delta, true);
         } else {
-            if (this.isControlPressed("left")) {
-                this.body.moveHorizontally(-SPEED * delta);
+            const leftStrength = this.getControlStrength("left");
+            const rightStrength = this.getControlStrength("right");
+            if (leftStrength > 0) {
+                this.body.moveHorizontally(-SPEED * delta * leftStrength);
                 this.facing = "left";
             }
-            if (this.isControlPressed("right")) {
-                this.body.moveHorizontally(SPEED * delta);
+            if (rightStrength > 0) {
+                this.body.moveHorizontally(SPEED * delta * rightStrength);
                 this.facing = "right";
             }
-            if (this.isControlPressed("up") && this.body.isOnGround()) {
+            if (jumpPressed && (grounded || !this.airJumpUsed)) {
                 this.body.velocity = { x: this.body.velocity.x, y: -0.25 };
+                if (!grounded) {
+                    this.airJumpUsed = true;
+                }
+                this.jumpHoldDuration = 0;
             }
 
             if (this.isControlPressed("primary")) {
@@ -78,13 +161,15 @@ export default class Player implements Entity, Attackable {
                 }
             }
 
-            if (this.isControlPressed("secondary") && !this.isControlPressed("up") && !this.isControlPressed("down")) {
-                const projectile = new Projectile(this.game, this, this.character.projectilePreset);
-                this.game.entities.push(projectile);
-                this.stunTime = 500;
-                projectile.body.velocity = { x: this.facing === "right" ? 0.3 : -0.3, y: -0.2 };
+            if (jumpReleased && this.body.velocity.y < 0 && this.jumpHoldDuration < MAX_JUMP_HOLD_DURATION) {
+                this.body.velocity = { x: this.body.velocity.x, y: this.body.velocity.y * SHORT_HOP_VELOCITY_SCALE };
             }
-            this.body.frame(delta, false);
+
+            const holdingJumpAscent = jumpHeld && this.body.velocity.y < 0 && this.jumpHoldDuration < MAX_JUMP_HOLD_DURATION;
+            if (holdingJumpAscent) {
+                this.jumpHoldDuration = Math.min(MAX_JUMP_HOLD_DURATION, this.jumpHoldDuration + delta);
+            }
+            this.body.frame(delta, false, holdingJumpAscent ? HELD_JUMP_GRAVITY_SCALE : 1);
         }
     }
 
@@ -115,28 +200,29 @@ export default class Player implements Entity, Attackable {
     }
 
     isControlPressed(control: keyof typeof this.controls): boolean {
+        return this.getControlStrength(control) > 0;
+    }
+
+    private getControlStrength(control: keyof typeof this.controls): number {
         if (isKeyPressed(this.controls[control].keyboard)) {
-            return true;
+            return 1;
         }
 
-        if (gamepad) {
-            const controllerControl = this.controls[control].controller;
-            if (controllerControl.type === "button") {
-                if (gamepad.buttons[controllerControl.index].pressed) {
-                    return true;
-                }
-            } else if (controllerControl.type === "axis") {
-                if (controllerControl.direction === "negative") {
-                    console.log("CHECK AXIS 1 is negative", gamepad.axes[controllerControl.index].valueOf());
-                    return gamepad.axes[controllerControl.index].valueOf() < 0;
-                }
-                if (controllerControl.direction === "positive") {
-                    return gamepad.axes[controllerControl.index].valueOf() > 0;
-                }
-
-            }
+        if (!gamepad) {
+            return 0;
         }
-        return false;
 
+        const controllerControl = this.controls[control].controller;
+        if (controllerControl.type === "button") {
+            return gamepad.buttons[controllerControl.index]?.pressed ? 1 : 0;
+        }
+
+        const axisValue = gamepad.axes[controllerControl.index] ?? 0;
+        const displacement = controllerControl.direction === "negative" ? -axisValue : axisValue;
+        if (displacement <= CONTROLLER_DEADZONE) {
+            return 0;
+        }
+
+        return Math.min(1, (displacement - CONTROLLER_DEADZONE) / (1 - CONTROLLER_DEADZONE));
     }
 }
