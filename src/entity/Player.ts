@@ -23,6 +23,10 @@ export type Controls = {
     secondary: Control;
 };
 
+type ProjectileChargeState =
+    | { type: "idle"; }
+    | { type: "charging"; duration: number; };
+
 const CONTROLLER_DEADZONE = 0.15;
 const MAX_JUMP_HOLD_DURATION = 280;
 const HELD_JUMP_GRAVITY_SCALE = 0.45;
@@ -51,16 +55,17 @@ export default class Player implements Entity, Attackable {
     private airJumpUsed = false;
     private jumpHeldLastFrame = false;
     private jumpHoldDuration = 0;
-    private chargingProjectile = false;
-    private projectileChargeDuration = 0;
+    private projectileChargeState: ProjectileChargeState = { type: "idle" };
     private secondaryHeldLastFrame = false;
 
     get isChargingProjectile() {
-        return this.chargingProjectile;
+        return this.projectileChargeState.type === "charging";
     }
 
     get projectileChargeRatio() {
-        return this.projectileChargeDuration / MAX_PROJECTILE_CHARGE_DURATION;
+        return this.projectileChargeState.type === "charging"
+            ? this.projectileChargeState.duration / MAX_PROJECTILE_CHARGE_DURATION
+            : 0;
     }
 
     private fireProjectile(chargeRatio: number) {
@@ -96,28 +101,27 @@ export default class Player implements Entity, Attackable {
             this.airJumpUsed = false;
         }
 
-        if (!this.chargingProjectile && secondaryPressed && this.stunTime <= 0) {
-            this.chargingProjectile = true;
-            this.projectileChargeDuration = 0;
+        if (this.projectileChargeState.type === "idle" && secondaryPressed && this.stunTime <= 0) {
+            this.projectileChargeState = { type: "charging", duration: 0 };
         }
 
-        if (this.chargingProjectile) {
+        if (this.projectileChargeState.type === "charging") {
             if (secondaryHeld && this.stunTime <= 0) {
-                this.projectileChargeDuration = Math.min(
+                const duration = Math.min(
                     MAX_PROJECTILE_CHARGE_DURATION,
-                    this.projectileChargeDuration + delta
+                    this.projectileChargeState.duration + delta
                 );
-                if (this.projectileChargeDuration >= MAX_PROJECTILE_CHARGE_DURATION) {
+                if (duration >= MAX_PROJECTILE_CHARGE_DURATION) {
                     this.fireProjectile(1);
-                    this.chargingProjectile = false;
-                    this.projectileChargeDuration = 0;
+                    this.projectileChargeState = { type: "idle" };
+                } else {
+                    this.projectileChargeState = { type: "charging", duration };
                 }
             } else if (secondaryReleased) {
                 if (this.stunTime <= 0) {
                     this.fireProjectile(this.projectileChargeRatio);
                 }
-                this.chargingProjectile = false;
-                this.projectileChargeDuration = 0;
+                this.projectileChargeState = { type: "idle" };
             }
         }
 
