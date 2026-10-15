@@ -10,6 +10,7 @@ export default class WinScreen {
         const winScreen = document.createElement("div");
         winScreen.classList.add("win-screen");
         winScreen.textContent = `Winner: ${this.winner.name}`;
+        winScreen.style.backgroundImage = `url(${this.winner.character.icon})`;
         const button = document.createElement("button");
         button.classList.add("button");
         button.textContent = "Play again";

@@ -314,6 +314,7 @@ main {
   flex-direction: column;
   height: 100%;
   font-size: calc(var(--pixel)*14);
+  background-size: cover;
 }
 
 .button {
