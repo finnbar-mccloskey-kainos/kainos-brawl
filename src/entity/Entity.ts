@@ -9,4 +9,5 @@ export default interface Entity {
     render(context: CanvasRenderingContext2D): void;
 
     get shouldDelete(): boolean;
+
 }

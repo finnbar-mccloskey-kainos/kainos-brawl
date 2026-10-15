@@ -33,13 +33,6 @@ export default class Projectile implements Entity {
     frame(delta: number) {
         this.body.frame(delta);
 
-        const dbg = (fn: any, ...args: any) => {
-            console.log(fn, ...args);
-            const result = fn(...args);
-            console.log("Result:", result);
-            return result;
-        };
-
         for (const entity of this.game.entities) {
             if (
                 entity != this.source && isAttackable(entity) && boxesOverlap(

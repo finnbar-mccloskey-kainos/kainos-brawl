@@ -28,4 +28,3 @@ window.addEventListener("gamepaddisconnected", e => {
         gamepad = null;
     }
 });
-
