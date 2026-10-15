@@ -96,21 +96,31 @@ class Stunned {
     }
 
 }
+
 class Downsmashing {
 
-    private static readonly GRAVITY_MULTIPLIER = 6;
+    private originalGravity: number;
+
+    private startTime: number;
 
     constructor(public player: Player) {
-        this.player.body.gravity *= Downsmashing.GRAVITY_MULTIPLIER;
+        this.originalGravity = this.player.body.gravity;
+        this.player.body.gravity = 0;
+        this.startTime = Date.now();
     }
 
     public readonly canAttack = true;
 
     frame(delta: number) {
-        this.player.body.frame(delta, true);
+        this.player.body.frame(delta);
 
-        if (this.player.body.velocity.y <= 0.05) {
-            this.player.body.gravity /= Downsmashing.GRAVITY_MULTIPLIER;
+        this.player.body.velocity.y = 0.3;
+
+        if (this.player.body.isOnGround()) {
+            const endTime = Date.now();
+            const duration = endTime - this.startTime;
+            const multiplier = Math.min(duration / 500, 1);
+            this.player.body.gravity = this.originalGravity;
             for (const entity of this.player.game.entities) {
                 if (entity != this.player && isAttackable(entity) && boxesOverlap(
                     this.player.body.getCollisionBox(),
@@ -120,7 +130,7 @@ class Downsmashing {
                         entity.body.position.y - this.player.body.position.y,
                         entity.body.position.x - this.player.body.position.x
                     );
-                    entity.attack(25, { x: Math.cos(knockbackAngle) * 0.3, y: -0.3 }, 150);
+                    entity.attack(25 * multiplier, { x: Math.cos(knockbackAngle) * 0.3 * multiplier, y: -0.3 * multiplier }, 150);
                 }
             }
             this.player.state = new Stunned(this.player, 700);
