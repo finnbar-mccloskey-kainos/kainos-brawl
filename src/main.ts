@@ -2,10 +2,6 @@ import "./style.css";
 import MainMenu from "./state/MainMenu";
 import Game from "./state/Game";
 import { emit, listen } from "./events";
-import TestMap from "./map/TestMap";
-import Brendan from "./character/Brendan";
-import Callum from "./character/Callum";
-import Map from "./map/Map";
 import { Controls } from "./entity/Player";
 import { setGamepad } from "./input";
 
