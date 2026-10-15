@@ -24,14 +24,74 @@ export const WIDTH = context.canvas.width;
 export type GameState = (MainMenu | Game) & { cleanup(): void; render(context: CanvasRenderingContext2D, delta: number): void; };
 
 export const playerControls: Controls[] = [
-    { left: { keyboard: "KeyA", controller: { type: "axis", direction: "negative", index: 1 } }, right: { keyboard: "KeyD", controller: { type: "axis", direction: "positive", index: 1 } }, up: { keyboard: "KeyW", controller: { type: "button", index: 15 } }, down: { keyboard: "KeyS", controller: { type: "axis", direction: "negative", index: 0 } }, primary: { keyboard: "ShiftLeft", controller: { type: "button", index: 13 } }, secondary: { keyboard: "KeyC", controller: { type: "button", index: 14 } } },
-    { left: { keyboard: "KeyJ", controller: { type: "axis", direction: "positive", index: 3 } }, right: { keyboard: "KeyL", controller: { type: "axis", direction: "negative", index: 3 } }, up: { keyboard: "KeyI", controller: { type: "button", index: 3 } }, down: { keyboard: "KeyK", controller: { type: "axis", direction: "positive", index: 2 } }, primary: { keyboard: "KeyB", controller: { type: "button", index: 2 } }, secondary: { keyboard: "Period", controller: { type: "button", index: 0 } } },
-
-    //{ left: "KeyJ", right: "KeyL", up: "KeyI", down: "KeyK", primary: "KeyB", secondary: "Period" }
+    {
+        left: {
+            keyboard: "KeyA",
+            controller: {
+                type: "axis", direction: "negative", index: 1
+            }
+        },
+        right: {
+            keyboard: "KeyD",
+            controller: {
+                type: "axis", direction: "positive", index: 1
+            }
+        },
+        up: {
+            keyboard: "KeyW", controller: {
+                type: "button", index: 15
+            }
+        },
+        menuUp: {
+            keyboard: "KeyW", controller: { type: "axis", direction: "positive", index: 0 }
+        },
+        down: {
+            keyboard: "KeyS",
+            controller: { type: "axis", direction: "negative", index: 0 }
+        },
+        primary: {
+            keyboard: "ShiftLeft",
+            controller: { type: "button", index: 13 }
+        },
+        secondary: {
+            keyboard: "KeyC",
+            controller: { type: "button", index: 14 }
+        }
+    },
+    {
+        left: {
+            keyboard: "KeyJ",
+            controller: { type: "axis", direction: "positive", index: 3 }
+        },
+        right: {
+            keyboard: "KeyL",
+            controller: { type: "axis", direction: "negative", index: 3 }
+        },
+        up: {
+            keyboard: "KeyI",
+            controller: { type: "button", index: 3 }
+        },
+        menuUp: {
+            keyboard: "KeyI",
+            controller: { type: "axis", direction: "negative", index: 2 }
+        },
+        down: {
+            keyboard: "KeyK",
+            controller: { type: "axis", direction: "positive", index: 2 }
+        },
+        primary: {
+            keyboard: "KeyB",
+            controller: { type: "button", index: 2 }
+        },
+        secondary: {
+            keyboard: "Period",
+            controller: { type: "button", index: 0 }
+        }
+    },
 ];
 
-// export let gameState: GameState = new MainMenu();
-export let gameState: GameState = new Game(new Map(TestMap), [new Brendan("green"), new Callum()]);
+export let gameState: GameState = new MainMenu();
+// export let gameState: GameState = new Game(new Map(TestMap), [new Brendan("green"), new Callum()]);
 
 let lastFrameTime: number | undefined;
 requestAnimationFrame(function gameLoop() {
