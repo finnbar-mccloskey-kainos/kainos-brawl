@@ -1,3 +1,4 @@
+import { PlayerState, Stunned } from "../entity/Player";
 import ProjectilePreset from "../entity/projectile/ProjectilePreset";
 import Character from "./Character";
 
@@ -22,7 +23,7 @@ export default class Callum implements Character {
         return { width: 20, height: 35 };
     }
 
-    render(context: CanvasRenderingContext2D, position: { x: number, y: number; }, facing: "left" | "right"): void {
+    render(state: PlayerState, context: CanvasRenderingContext2D, position: { x: number, y: number; }, facing: "left" | "right"): void {
         if (this.sprite.complete && this.sprite.naturalWidth > 0) {
             context.save();
             context.translate(
@@ -30,7 +31,11 @@ export default class Callum implements Character {
                 Math.trunc(position.y) - this.sprite.naturalHeight
             );
             context.scale(facing === "left" ? -1 : 1, 1);
+            if (state instanceof Stunned) {
+                context.filter = "brightness(200%)";
+            }
             context.drawImage(this.sprite, 0, 0);
+            context.filter = "none";
             context.restore();
         }
     }

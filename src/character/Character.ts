@@ -1,3 +1,4 @@
+import { PlayerState } from "../entity/Player";
 import ProjectilePreset from "../entity/projectile/ProjectilePreset";
 
 export default interface Character {
@@ -7,5 +8,5 @@ export default interface Character {
 
     get projectilePreset(): ProjectilePreset;
 
-    render(context: CanvasRenderingContext2D, position: { x: number, y: number; }, facing: "left" | "right"): void;
+    render(state: PlayerState, context: CanvasRenderingContext2D, position: { x: number, y: number; }, facing: "left" | "right"): void;
 }

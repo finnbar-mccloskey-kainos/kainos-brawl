@@ -98,7 +98,7 @@ class Normal {
     }
 
 }
-class Stunned {
+export class Stunned {
 
     public readonly canAttack = false;
 
@@ -193,7 +193,7 @@ class ShieldBroken {
     }
 }
 
-type PlayerState = (Normal | Stunned | Downsmashing | ShieldBroken) & { get canAttack(): boolean; frame(delta: number): void; };
+export type PlayerState = (Normal | Stunned | Downsmashing | ShieldBroken) & { get canAttack(): boolean; frame(delta: number): void; };
 
 export default class Player implements Entity, Attackable {
 
@@ -353,7 +353,7 @@ export default class Player implements Entity, Attackable {
         if (this._state instanceof ShieldBroken) {
             context.filter = "brightness(0.8)";
         }
-        this.character.render(context, { x: this.body.position.x, y: this.body.position.y }, this.facing);
+        this.character.render(this._state, context, { x: this.body.position.x, y: this.body.position.y }, this.facing);
         context.restore();
     }
 

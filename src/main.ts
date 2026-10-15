@@ -10,7 +10,7 @@ export let logo = new Image();
 logo.src = "/logo.png";
 logo.classList.add("logo");
 
-export const DEBUG = true;
+export const DEBUG = false;
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game")!;
 const context = canvas.getContext("2d", { alpha: false })!;
