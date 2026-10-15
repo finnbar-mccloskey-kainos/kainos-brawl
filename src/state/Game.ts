@@ -1,21 +1,18 @@
 import { emit, listen } from "../events";
-import { DEBUG, playerControls } from "../main";
+import { DEBUG, playerControls, sounds } from "../main";
 import Map from "../map/Map";
 import Player from "../entity/Player";
 import { mouse_pos } from "../main";
 import Character from "../character/Character";
 import Entity from "../entity/Entity";
 import Projectile from "../entity/projectile/Projectile";
-import collisionAudioUrl from "../../audio/Collision.wav?url";
 import WinScreen from "./WinScreen";
 
 export default class Game {
 
     private listeners = [] as { unsubscribe: () => void; }[];
-    private audioContext = new AudioContext();
-    private musicSource?: AudioBufferSourceNode;
+    private music?: HTMLAudioElement;
     private currentAnimationInterval?: number;
-    private cleanedUp = false;
     private over = false;
 
     players: Player[] = [];
@@ -127,12 +124,10 @@ export default class Game {
     }
 
     cleanup() {
-        this.cleanedUp = true;
         if (this.currentAnimationInterval !== undefined) {
             window.clearInterval(this.currentAnimationInterval);
         }
-        this.musicSource?.stop();
-        void this.audioContext.close();
+        this.stopMusic();
 
         for (let listener of this.listeners) {
             listener.unsubscribe();
@@ -218,35 +213,28 @@ export default class Game {
     }
 
     private async playMusic() {
+        const music = sounds.collision();
+        this.music = music;
+        music.volume = 0.5;
+        music.onended = () => {
+            music.currentTime = 12.54;
+            void music.play().catch(error => {
+                console.error("Unable to loop game music", error);
+            });
+        };
         try {
-            const [response] = await Promise.all([
-                fetch(collisionAudioUrl),
-                this.audioContext.resume(),
-            ]);
-            if (!response.ok) {
-                throw new Error(`Failed to load music: ${response.status}`);
-            }
-
-            const audioBuffer = await this.audioContext.decodeAudioData(await response.arrayBuffer());
-            if (this.cleanedUp) {
-                return;
-            }
-
-            const source = this.audioContext.createBufferSource();
-            source.buffer = audioBuffer;
-            source.loop = true;
-            source.loopStart = 12.54;
-            source.loopEnd = audioBuffer.duration;
-
-            const volume = this.audioContext.createGain();
-            volume.gain.value = 0.5;
-            source.connect(volume);
-            volume.connect(this.audioContext.destination);
-
-            this.musicSource = source;
-            source.start(0, 0);
+            await music.play();
         } catch (error) {
             console.error("Unable to play game music", error);
+        }
+    }
+
+    private stopMusic() {
+        if (this.music) {
+            this.music.onended = null;
+            this.music.pause();
+            this.music.currentTime = 0;
+            this.music = undefined;
         }
     }
 
@@ -267,7 +255,10 @@ export default class Game {
             if (entity.body.position.x < -BOUNDS || entity.body.position.y < -BOUNDS || entity.body.position.x > context.canvas.width + BOUNDS || entity.body.position.y > context.canvas.height + BOUNDS) {
                 if (entity instanceof Player) {
                     const winner = this.players.find(p => p !== entity)!;
-                    console.log("TODO: play death sound");
+
+                    this.stopMusic();
+                    sounds.roundEnd().play();
+
                     this.over = true;
                     setTimeout(() => {
                         emit("stateChange", { oldState: this, newState: new WinScreen(winner) });

@@ -4,6 +4,7 @@ import boxesOverlap from "../../util/boxesOverlap";
 import Entity from "../Entity";
 import { isAttackable } from "../Attackable";
 import ProjectilePreset from "./ProjectilePreset";
+import { sounds } from "../../main";
 
 export default class Projectile implements Entity {
 
@@ -43,6 +44,7 @@ export default class Projectile implements Entity {
                     entity.body.getCollisionBox()
                 )
             ) {
+                sounds.projectileLand().play();
                 let knockbackAngle = Math.atan2(
                     entity.body.position.y - this.body.position.y,
                     entity.body.position.x - this.body.position.x

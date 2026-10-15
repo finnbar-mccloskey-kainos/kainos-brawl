@@ -315,6 +315,7 @@ main {
   height: 100%;
   font-size: calc(var(--pixel)*14);
   background-size: cover;
+  background-position: center;
 }
 
 .button {

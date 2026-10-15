@@ -9,6 +9,7 @@ import boxTranslate from "../util/boxTranslate";
 import Attackable, { isAttackable } from "./Attackable";
 import Projectile from "./projectile/Projectile";
 import increase from "../util/increase";
+import { sounds } from "../main";
 
 export type Control = {
     keyboard: string;
@@ -73,6 +74,8 @@ class Normal {
         }
 
         if (this.player.isControlPressed("primary")) {
+            sounds.melee().play();
+
             const attackHitbox = boxTranslate(
                 this.player.body.getCollisionBox(),
                 { x: this.player.facing === "right" ? 20 : -20, y: 0 }
@@ -166,6 +169,7 @@ class Downsmashing {
         }
 
         if (this.player.body.isOnGround() || attacked) {
+            sounds.downsmash().play();
             this.player.state = new Stunned(this.player, 700);
         }
     }
@@ -452,6 +456,7 @@ export default class Player implements Entity, Attackable {
     private fireProjectile(chargeRatio: number) {
         this.chargingProjectile = false;
         this.projectileChargeDuration = 0;
+        sounds.projectileLaunch().play();
         const projectile = new Projectile(
             this.game,
             this,

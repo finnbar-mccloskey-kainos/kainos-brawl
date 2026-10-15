@@ -5,6 +5,7 @@ import { emit, listen } from "./events";
 import { Controls } from "./entity/Player";
 import { setGamepad } from "./input";
 import WinScreen from "./state/WinScreen";
+import { setupSounds, SoundPlayer } from "./sound";
 
 export let logo = new Image();
 logo.src = "/logo.png";
@@ -95,28 +96,36 @@ export const playerControls: Controls[] = [
     },
 ];
 
-export let gameState: GameState = new MainMenu();
+export let gameState: GameState;
 // export let gameState: GameState = new Game(new Map(TestMap), [new Brendan("green"), new Callum()]);
 
 let lastFrameTime: number | undefined;
-requestAnimationFrame(function gameLoop() {
 
-    for (let gamepad of navigator.getGamepads()) {
-        if (gamepad) {
-            setGamepad(gamepad);
-            break;
+export let sounds: SoundPlayer;
+async function main() {
+
+    sounds = await setupSounds();
+    gameState = new MainMenu();
+
+    requestAnimationFrame(function gameLoop() {
+
+        for (let gamepad of navigator.getGamepads()) {
+            if (gamepad) {
+                setGamepad(gamepad);
+                break;
+            }
         }
-    }
 
-    const delta = performance.now() - (lastFrameTime ?? performance.now());
-    lastFrameTime = performance.now();
+        const delta = performance.now() - (lastFrameTime ?? performance.now());
+        lastFrameTime = performance.now();
 
-    emit("frame", { delta });
+        emit("frame", { delta });
 
-    gameState.render(context, delta);
+        gameState.render(context, delta);
 
-    requestAnimationFrame(gameLoop);
-});
+        requestAnimationFrame(gameLoop);
+    });
+};
 
 listen("stateChange", ({ oldState, newState }) => {
     oldState.cleanup();
@@ -145,3 +154,7 @@ if (DEBUG) {
 }
 
 updateGamePixelSize();
+
+void main().catch(error => {
+    console.error("Unable to initialize game audio", error);
+});
