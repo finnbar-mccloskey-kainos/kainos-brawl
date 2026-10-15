@@ -21,6 +21,9 @@ export default class Projectile implements Entity {
         private readonly game: Game,
         public readonly source: Entity,
         public preset: ProjectilePreset,
+        private readonly staleDamageMultiplier = 1,
+        private readonly onHit?: (hitShield: boolean) => void,
+        private readonly chargeDamageMultiplier = 1,
     ) {
         this.body = new Body(game, { ...source.body.position }, { width: 10, height: 10 });
     }
@@ -44,8 +47,20 @@ export default class Projectile implements Entity {
                     entity.body.position.y - this.body.position.y,
                     entity.body.position.x - this.body.position.x
                 );
-                entity.attack(this.preset.damage, { x: Math.cos(knockbackAngle) * this.preset.knockback, y: -Math.sin(knockbackAngle) * this.preset.knockback }, this.preset.stunTime);
+                const hitShield = "isShielding" in entity && entity.isShielding === true;
+                const hit = entity.attack(
+                    this.preset.damage * this.staleDamageMultiplier * this.chargeDamageMultiplier,
+                    {
+                        x: Math.cos(knockbackAngle) * this.preset.knockback * this.staleDamageMultiplier,
+                        y: -Math.sin(knockbackAngle) * this.preset.knockback * this.staleDamageMultiplier,
+                    },
+                    this.preset.stunTime
+                );
+                if (hit) {
+                    this.onHit?.(hitShield);
+                }
                 this._shouldDelete = true;
+                break;
             }
         }
         if (this.body.isOnGround() || this.lifetime > 2000) {
