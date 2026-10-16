@@ -64,13 +64,13 @@ main {
 }
 
 .character-list {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
   position: relative;
-  top: calc(7*var(--pixel));
-  left: calc(5*var(--pixel));
+  top: calc(35*var(--pixel));
+  left: calc(0*var(--pixel));
   margin-left: auto;
-  padding: calc(5*var(--pixel));
+  padding: calc(35*var(--pixel));
 }
 
 .character {

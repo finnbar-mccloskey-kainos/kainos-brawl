@@ -9,9 +9,10 @@ import Brendan from "../character/Brendan";
 import Simon from "../character/Simon";
 import Callum from "../character/Callum";
 import { gamepad } from "../input";
+import Zuzanna from "../character/zuzanna";
 
-const characters: Character[] = [new Callum(), new Brendan("yellow"), new Simon("blue")];
-const characterGridColumns = 8;
+const characters: Character[] = [new Callum(), new Brendan(), new Simon(), new Zuzanna()];
+const characterGridColumns = 2;
 
 export default class MainMenu implements EventListenerObject {
 
@@ -129,7 +130,7 @@ export default class MainMenu implements EventListenerObject {
                 this.selections[index].number--;
             } else if (action === "right" && this.selections[index].number < characters.length - 1) {
                 this.selections[index].number++;
-            } else if (action === "menuUp" && this.selections[index].number >= characterGridColumns) {
+            } else if ((action === "menuUp" || action === "up") && this.selections[index].number >= characterGridColumns) {
                 this.selections[index].number -= characterGridColumns;
             } else if (action === "down" && this.selections[index].number < characters.length - characterGridColumns) {
                 this.selections[index].number += characterGridColumns;
