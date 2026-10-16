@@ -57,7 +57,7 @@ export const playerControls: Controls[] = [
         },
         shield: {
             keyboard: "KeyE",
-            controller: { type: "button", index: 12 }
+            controller: { type: "button", index: 8 }
         }
     },
     {
@@ -91,7 +91,7 @@ export const playerControls: Controls[] = [
         },
         shield: {
             keyboard: "KeyU",
-            controller: { type: "button", index: 1 }
+            controller: { type: "button", index: 8 }
         }
     },
 ];

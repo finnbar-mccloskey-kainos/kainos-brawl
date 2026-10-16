@@ -7,11 +7,12 @@ import Character from "../character/Character";
 import Entity from "../entity/Entity";
 import Projectile from "../entity/projectile/Projectile";
 import WinScreen from "./WinScreen";
+import type { MusicPlayback } from "../sound";
 
 export default class Game {
 
     private listeners = [] as { unsubscribe: () => void; }[];
-    private music?: HTMLAudioElement;
+    private music?: MusicPlayback;
     private currentAnimationInterval?: number;
     private over = false;
 
@@ -213,29 +214,21 @@ export default class Game {
     }
 
     private async playMusic() {
-        const music = sounds.collision();
-        this.music = music;
-        music.volume = 0.5;
-        music.onended = () => {
-            music.currentTime = 12.54;
-            void music.play().catch(error => {
-                console.error("Unable to loop game music", error);
-            });
-        };
         try {
-            await music.play();
+            const music = await sounds.playLoopingMusic("collision", { loopStart: 12.54, startAtFromEnd: 5, volume: 0.5 });
+            if (this.over) {
+                music.stop();
+            } else {
+                this.music = music;
+            }
         } catch (error) {
             console.error("Unable to play game music", error);
         }
     }
 
     private stopMusic() {
-        if (this.music) {
-            this.music.onended = null;
-            this.music.pause();
-            this.music.currentTime = 0;
-            this.music = undefined;
-        }
+        this.music?.stop();
+        this.music = undefined;
     }
 
     render(context: CanvasRenderingContext2D, delta: number) {
@@ -257,7 +250,6 @@ export default class Game {
                     const winner = this.players.find(p => p !== entity)!;
 
                     this.stopMusic();
-                    sounds.roundEnd().play();
 
                     this.over = true;
                     setTimeout(() => {

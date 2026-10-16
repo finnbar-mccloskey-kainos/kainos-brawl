@@ -1,6 +1,6 @@
 import Character from "../character/Character";
 import { emit } from "../events";
-import { playerControls } from "../main";
+import { playerControls, sounds } from "../main";
 import Map from "../map/Map";
 import TestMap from "../map/TestMap";
 import Game from "./Game";
@@ -9,6 +9,7 @@ import Brendan from "../character/Brendan";
 import Simon from "../character/Simon";
 import Callum from "../character/Callum";
 import { gamepad } from "../input";
+import type { MusicPlayback } from "../sound";
 
 const characters: Character[] = [new Callum(), new Brendan("yellow"), new Simon("blue")];
 const characterGridColumns = 8;
@@ -18,9 +19,13 @@ export default class MainMenu implements EventListenerObject {
     private selections: { number: number, confirmed: boolean; }[] = [{ number: 0, confirmed: false }, { number: 0, confirmed: false }];
     private gameStarted = false;
     private controllerInputStartsAt = performance.now() + 1000;
+    private menuMusic?: MusicPlayback;
+    private menuMusicStarting = false;
+    private menuAudioCleanedUp = false;
 
     constructor() {
         window.addEventListener("keydown", this);
+        this.requestMenuMusic();
         const characterList = document.createElement("div");
         characterList.className = "character-list";
         characterList.replaceChildren(...characters.map(character => {
@@ -45,6 +50,9 @@ export default class MainMenu implements EventListenerObject {
 
     cleanup() {
         window.removeEventListener("keydown", this);
+        this.menuAudioCleanedUp = true;
+        this.menuMusic?.stop();
+        this.menuMusic = undefined;
     }
 
     private heldControllerButtons = new Set<string>();
@@ -120,6 +128,7 @@ export default class MainMenu implements EventListenerObject {
     }
 
     handleControl(index: number, action: string) {
+        this.requestMenuMusic();
         if (this.selections[index].confirmed) {
             if (action === "primary" || action === "secondary") {
                 this.selections[index].confirmed = false;
@@ -138,6 +147,24 @@ export default class MainMenu implements EventListenerObject {
             }
         }
         this.refreshCharacterSelection();
+    }
+
+    private requestMenuMusic() {
+        if (this.menuAudioCleanedUp || this.menuMusic || this.menuMusicStarting) return;
+        this.menuMusicStarting = true;
+        void sounds.playLoopingMusic("anticipation", { loopStart: 5.65, startAtFromEnd: 5, volume: 0.5 })
+            .then(music => {
+                this.menuMusicStarting = false;
+                if (this.menuAudioCleanedUp) {
+                    music.stop();
+                } else {
+                    this.menuMusic = music;
+                }
+            })
+            .catch(error => {
+                this.menuMusicStarting = false;
+                console.warn("Unable to play menu music", error);
+            });
     }
 
     refreshCharacterSelection() {

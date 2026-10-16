@@ -74,7 +74,9 @@ class Normal {
         }
 
         if (this.player.isControlPressed("primary")) {
-            sounds.melee().play();
+            if (this.player.primaryPressedThisFrame) {
+                sounds.melee().play();
+            }
 
             const attackHitbox = boxTranslate(
                 this.player.body.getCollisionBox(),
@@ -220,6 +222,8 @@ export default class Player implements Entity, Attackable {
     private jumpReleasedThisFrame = false;
     public jumpPressedThisFrame = false;
     private jumpHoldDuration = 0;
+    private primaryHeldLastFrame = false;
+    public primaryPressedThisFrame = false;
     private chargingProjectile = false;
     private projectileChargeDuration = 0;
     private secondaryHeldLastFrame = false;
@@ -318,6 +322,9 @@ export default class Player implements Entity, Attackable {
         this.jumpPressedThisFrame = jumpHeld && !this.jumpHeldLastFrame;
         this.jumpReleasedThisFrame = !jumpHeld && this.jumpHeldLastFrame;
         this.jumpHeldLastFrame = jumpHeld;
+        const primaryHeld = this.isControlPressed("primary");
+        this.primaryPressedThisFrame = primaryHeld && !this.primaryHeldLastFrame;
+        this.primaryHeldLastFrame = primaryHeld;
 
         this.updateShield(delta);
         if (this._state instanceof Normal) {

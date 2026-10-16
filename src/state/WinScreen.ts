@@ -1,11 +1,15 @@
 import Player from "../entity/Player";
 import { isKeyPressed } from "../input";
+import { sounds } from "../main";
 
 export default class WinScreen {
     private confirmWasPressed = false;
+    private winMusic?: HTMLAudioElement;
 
     constructor(private winner: Player) {
         this.confirmWasPressed = this.isConfirmButtonPressed();
+        this.winMusic = sounds.win();
+        void this.winMusic.play().catch(error => console.error("Unable to play win music", error));
         const ui = document.getElementById("ui");
         const winScreen = document.createElement("div");
         winScreen.classList.add("win-screen");
@@ -22,6 +26,11 @@ export default class WinScreen {
     }
 
     cleanup() {
+        if (this.winMusic) {
+            this.winMusic.pause();
+            this.winMusic.currentTime = 0;
+            this.winMusic = undefined;
+        }
     }
 
     render(context: CanvasRenderingContext2D, _: number) {
