@@ -3,6 +3,11 @@
   src: URL('/KiwiSoda.ttf') format('truetype');
 }
 
+:root {
+  --player-one-color: #1554a3;
+  --player-two-color: #2eb353;
+}
+
 * {
   image-rendering: pixelated;
 }
@@ -91,6 +96,74 @@ main {
   height: calc(42*var(--pixel));
 }
 
+.main-menu.stage-selection {
+  box-sizing: border-box;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(10*var(--pixel));
+  padding: calc(12*var(--pixel)) calc(20*var(--pixel));
+}
+
+.stage-selection h1 {
+  margin: 0;
+  color: white;
+  font-size: calc(18*var(--pixel));
+  line-height: 1;
+  text-shadow: var(--pixel) var(--pixel) black;
+}
+
+.stage-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(12*var(--pixel));
+  width: 100%;
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  gap: calc(4*var(--pixel));
+  padding: calc(3*var(--pixel));
+  border: calc(2*var(--pixel)) solid #252525;
+  border-radius: 0;
+  background: #171717;
+  color: white;
+  font: inherit;
+  font-size: calc(11*var(--pixel));
+  cursor: pointer;
+}
+
+.stage img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 352 / 224;
+  object-fit: contain;
+}
+
+.stage.selected,
+.stage:hover,
+.stage:focus-visible {
+  border-color: #ffdc5b;
+  outline: none;
+}
+
+.stage-back {
+  padding: calc(2*var(--pixel)) calc(10*var(--pixel));
+  border: var(--pixel) solid white;
+  background: #171717;
+  color: white;
+  font: inherit;
+  font-size: calc(10*var(--pixel));
+  cursor: pointer;
+}
+
+.stage-back.selected,
+.stage-back:hover,
+.stage-back:focus-visible {
+  border-color: #ffdc5b;
+  outline: none;
+}
+
 .player1-selection .character-icon {
   opacity: 0.5;
 }
@@ -101,25 +174,33 @@ main {
 
 .player1-selection {
   margin: 0;
-  border: var(--pixel) solid blue;
-  --selection: blue;
+  border: var(--pixel) solid var(--player-one-color);
+  --selection: var(--player-one-color);
 }
 
 .player2-selection {
   margin: 0;
-  border: var(--pixel) solid red;
-  --selection: red;
+  border: var(--pixel) solid var(--player-two-color);
+  --selection: var(--player-two-color);
 }
 
 .player1-selection.player2-selection {
   margin: 0;
-  border: var(--pixel) solid blue;
-  outline: var(--pixel) solid red;
-  --selection: purple;
+  border: var(--pixel) solid var(--player-one-color);
+  outline: var(--pixel) solid var(--player-two-color);
+  --selection: color-mix(in srgb, var(--player-one-color), var(--player-two-color));
 }
 
-.confirmed {
-  background: var(--selection);
+.player1-confirmed {
+  background: var(--player-one-color);
+}
+
+.player2-confirmed {
+  background: var(--player-two-color);
+}
+
+.player1-confirmed.player2-confirmed {
+  background: color-mix(in srgb, var(--player-one-color), var(--player-two-color));
 }
 
 .logo {
@@ -129,13 +210,14 @@ main {
 
 .help {
   --edge-gap: calc(5*var(--pixel));
-  --hover-scale: 1.2;
+  --hover-scale: 1;
   position: absolute;
+  z-index: 2;
   bottom: var(--edge-gap);
-  left: 50%;
+  left: var(--edge-gap);
   box-sizing: border-box;
-  max-width: calc((100% - 5*var(--edge-gap)) / var(--hover-scale));
-  max-height: calc((100% - 2*var(--edge-gap)) / var(--hover-scale));
+  max-width: calc(60% - 2*var(--edge-gap));
+  max-height: calc(100% - 2*var(--edge-gap));
   overflow: auto;
   background: white;
   border: var(--pixel) solid black;
@@ -143,12 +225,12 @@ main {
   opacity: 0.6;
   transition: all 0.3s ease;
   font-size: calc(7*var(--pixel));
-  transform-origin: bottom center;
-  transform: translateX(-50%) scale(0.5);
+  transform-origin: bottom left;
+  transform: scale(0.5);
 }
 
 .help:hover {
-  transform: translateX(-50%) scale(var(--hover-scale));
+  transform: scale(var(--hover-scale));
   opacity: 1;
 }
 
@@ -201,13 +283,13 @@ main {
 }
 
 .blue-score-bar {
-  background: linear-gradient(90deg, #09245f 0%, #1768bf 68%, #a4eaff 100%);
+  background: linear-gradient(90deg, #071d4c 0%, var(--player-one-color) 68%, #83c9ed 100%);
   background-size: calc(var(--score-split) + var(--score-bleed)) 100%;
   background-repeat: no-repeat;
 }
 
 .red-score-bar {
-  background: linear-gradient(90deg, #ffd2bd 0%, #e64253 38%, #701326 100%);
+  background: linear-gradient(90deg, #c0f3ce 0%, var(--player-two-color) 38%, #104322 100%);
   background-size: calc(100% - var(--score-split) + var(--score-bleed)) 100%;
   background-position: right;
   background-repeat: no-repeat;
@@ -229,13 +311,13 @@ main {
 }
 
 .blue-ember {
-  --ember-color: #b5edff;
-  --ember-glow: rgb(73 184 255 / 80%);
+  --ember-color: #8ecdec;
+  --ember-glow: rgb(35 126 212 / 80%);
 }
 
 .red-ember {
-  --ember-color: #ffbc70;
-  --ember-glow: rgb(255 85 40 / 85%);
+  --ember-color: #9de9b2;
+  --ember-glow: rgb(46 179 83 / 85%);
 }
 
 @keyframes score-ember-drift {
@@ -283,6 +365,26 @@ main {
   right: max(3px, calc(var(--pixel)*3));
 }
 
+.score-stocks {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  color: #fff;
+  font-size: max(9px, calc(var(--pixel)*6));
+  line-height: 1;
+  text-shadow: 0 1px 2px #000, 1px 0 2px #000;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.blue-stocks {
+  left: max(32px, calc(var(--pixel)*22));
+}
+
+.red-stocks {
+  right: max(32px, calc(var(--pixel)*22));
+}
+
 .score-divider {
   position: absolute;
   z-index: 3;
@@ -307,19 +409,43 @@ main {
 }
 
 .win-screen {
+  position: relative;
+  isolation: isolate;
   color: white;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  flex-direction: column;
   height: 100%;
-  font-size: calc(var(--pixel)*14);
+  font-size: calc(var(--pixel)*28);
   background-size: cover;
   background-position: center;
 }
 
+.win-confetti {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.win-screen-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.win-screen-title {
+  -webkit-text-stroke: calc(var(--pixel) + 2px) black;
+  paint-order: stroke fill;
+  text-align: center;
+}
+
 .button {
-  background-color: greenyellow;
+  background-color: white;
   border: var(--pixel) solid black;
   padding: calc(var(--pixel)*2);
   cursor: pointer;

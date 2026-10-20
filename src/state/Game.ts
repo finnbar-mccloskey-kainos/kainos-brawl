@@ -7,13 +7,15 @@ import Character from "../character/Character";
 import Entity from "../entity/Entity";
 import Projectile from "../entity/projectile/Projectile";
 import WinScreen from "./WinScreen";
+import type { MusicPlayback } from "../sound";
 
 export default class Game {
 
     private listeners = [] as { unsubscribe: () => void; }[];
-    private music?: HTMLAudioElement;
+    private music?: MusicPlayback;
     private currentAnimationInterval?: number;
     private over = false;
+    private cleanedUp = false;
 
     players: Player[] = [];
 
@@ -77,9 +79,17 @@ export default class Game {
         bluePercentage.classList.add("score-percentage", "blue-percentage");
         scoreBar.appendChild(bluePercentage);
 
+        const blueStocks = document.createElement("span");
+        blueStocks.classList.add("score-stocks", "blue-stocks");
+        scoreBar.appendChild(blueStocks);
+
         const redPercentage = document.createElement("span");
         redPercentage.classList.add("score-percentage", "red-percentage");
         scoreBar.appendChild(redPercentage);
+
+        const redStocks = document.createElement("span");
+        redStocks.classList.add("score-stocks", "red-stocks");
+        scoreBar.appendChild(redStocks);
 
         const divider = document.createElement("span");
         divider.classList.add("score-divider");
@@ -91,9 +101,11 @@ export default class Game {
 
         const getPercentageColor = (percentage: number) => {
             const progress = Math.max(0, Math.min(1, percentage / 200));
-            const red = Math.round(255 + (88 - 255) * progress);
-            const greenBlue = Math.round(255 * (1 - progress));
-            return `rgb(${red}, ${greenBlue}, ${greenBlue})`;
+            const start = progress < 0.5 ? [255, 255, 255] : [46, 179, 83];
+            const end = progress < 0.5 ? [46, 179, 83] : [14, 64, 28];
+            const amount = progress < 0.5 ? progress * 2 : (progress - 0.5) * 2;
+            const channels = start.map((channel, index) => Math.round(channel + (end[index] - channel) * amount));
+            return `rgb(${channels.join(", ")})`;
         };
 
         const updateScoreBar = () => {
@@ -111,6 +123,8 @@ export default class Game {
             }
             bluePercentage.textContent = `${Math.round(bluePlayer.percentage)}%`;
             redPercentage.textContent = `${Math.round(redPlayer.percentage)}%`;
+            blueStocks.textContent = `x${bluePlayer.stocks}`;
+            redStocks.textContent = `x${redPlayer.stocks}`;
             bluePercentage.style.color = getPercentageColor(bluePlayer.percentage);
             redPercentage.style.color = getPercentageColor(redPlayer.percentage);
         };
@@ -124,6 +138,7 @@ export default class Game {
     }
 
     cleanup() {
+        this.cleanedUp = true;
         if (this.currentAnimationInterval !== undefined) {
             window.clearInterval(this.currentAnimationInterval);
         }
@@ -213,29 +228,21 @@ export default class Game {
     }
 
     private async playMusic() {
-        const music = sounds.collision();
-        this.music = music;
-        music.volume = 0.5;
-        music.onended = () => {
-            music.currentTime = 12.54;
-            void music.play().catch(error => {
-                console.error("Unable to loop game music", error);
-            });
-        };
         try {
-            await music.play();
+            const music = await sounds.playLoopingMusic("collision", { loopStart: 12.54, volume: 0.5 });
+            if (this.over || this.cleanedUp) {
+                music.stop();
+            } else {
+                this.music = music;
+            }
         } catch (error) {
             console.error("Unable to play game music", error);
         }
     }
 
     private stopMusic() {
-        if (this.music) {
-            this.music.onended = null;
-            this.music.pause();
-            this.music.currentTime = 0;
-            this.music = undefined;
-        }
+        this.music?.stop();
+        this.music = undefined;
     }
 
     render(context: CanvasRenderingContext2D, delta: number) {
@@ -250,19 +257,35 @@ export default class Game {
         for (let entity of this.entities) {
             entity.frame(delta);
 
-            const BOUNDS = 100;
+            const bounds = entity instanceof Player ? 0 : 100;
+            const hitbox = entity.body.getCollisionBox();
+            const outOfBounds = hitbox.bottomRight.x <= -bounds ||
+                (hitbox.bottomRight.y <= -bounds && (!(entity instanceof Player) || entity.canBeKOdFromTop)) ||
+                hitbox.topLeft.x >= context.canvas.width + bounds ||
+                hitbox.topLeft.y >= context.canvas.height + bounds;
 
-            if (entity.body.position.x < -BOUNDS || entity.body.position.y < -BOUNDS || entity.body.position.x > context.canvas.width + BOUNDS || entity.body.position.y > context.canvas.height + BOUNDS) {
+            if (outOfBounds) {
                 if (entity instanceof Player) {
-                    const winner = this.players.find(p => p !== entity)!;
+                    if (entity.loseStock() === 0) {
+                        const winner = this.players.find(p => p !== entity)!;
 
-                    this.stopMusic();
-                    sounds.roundEnd().play();
+                        this.stopMusic();
 
-                    this.over = true;
-                    setTimeout(() => {
-                        emit("stateChange", { oldState: this, newState: new WinScreen(winner) });
-                    }, 1000);
+                        this.over = true;
+                        setTimeout(() => {
+                            emit("stateChange", { oldState: this, newState: new WinScreen(winner) });
+                        }, 1000);
+                    } else {
+                        const floor = this.map.data.platforms
+                            .filter(platform => !platform.passthrough)
+                            .sort((left, right) => right.topLeft.y - left.topLeft.y)[0];
+                        if (floor) {
+                            entity.respawn({
+                                x: (floor.topLeft.x + floor.bottomRight.x - entity.body.collisionBoxSize.width) / 2,
+                                y: floor.topLeft.y,
+                            });
+                        }
+                    }
                 } else {
                     this.entities = this.entities.filter(e => e !== entity);
                 }
@@ -310,16 +333,19 @@ export default class Game {
                 entity.render(context);
                 if (entity instanceof Player) {
                     if (entity === this.players[0]) {
-                        context.fillStyle = "blue";
+                        context.fillStyle = "#1554a3";
                     } else if (entity === this.players[1]) {
-                        context.fillStyle = "red";
+                        context.fillStyle = "#2eb353";
                     }
                     context.font = "15px \"Kiwi Soda\"";
+                    context.save();
+                    context.textAlign = "center";
                     context.fillText(
-                        "v",
-                        entity.body.position.x + (entity.body.collisionBoxSize.width / 3),
+                        entity === this.players[0] ? "P1" : "P2",
+                        entity.body.position.x + entity.body.collisionBoxSize.width / 2,
                         entity.body.position.y - 5 - entity.body.collisionBoxSize.height,
                     );
+                    context.restore();
 
                     if (entity.isChargingProjectile) {
                         const meterWidth = 20;
@@ -327,11 +353,11 @@ export default class Game {
                         const meterX = entity.body.position.x + (entity.body.collisionBoxSize.width - meterWidth) / 2;
                         const meterY = entity.body.position.y - entity.body.collisionBoxSize.height - 25;
 
-                        context.fillStyle = "#240a10";
+                        context.fillStyle = "#0b2914";
                         context.fillRect(meterX, meterY, meterWidth, meterHeight);
-                        context.fillStyle = "#f04452";
+                        context.fillStyle = "#2eb353";
                         context.fillRect(meterX, meterY, meterWidth * entity.projectileChargeRatio, meterHeight);
-                        context.strokeStyle = "#ffe4c7";
+                        context.strokeStyle = "#d5f5dd";
                         context.lineWidth = 1;
                         context.strokeRect(meterX, meterY, meterWidth, meterHeight);
                     }
@@ -341,7 +367,7 @@ export default class Game {
             this.entities = this.entities.filter(entity => !entity.shouldDelete);
 
             if (DEBUG) {
-                context.fillStyle = "blue";
+                context.fillStyle = "#1554a3";
                 context.fillRect(mouse_pos.x, mouse_pos.y, 1, 1);
             }
         }
