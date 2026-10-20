@@ -6,7 +6,7 @@ import Body, { REALISTIC_DRAG, REALISTIC_GRAVITY } from "../physics/Body";
 import Game from "../state/Game";
 import boxesOverlap from "../util/boxesOverlap";
 import boxTranslate from "../util/boxTranslate";
-import Attackable, { isAttackable } from "./Attackable";
+import Attackable, { isAttackable, type KnockbackProfile } from "./Attackable";
 import Projectile from "./projectile/Projectile";
 import increase from "../util/increase";
 import { sounds } from "../main";
@@ -33,6 +33,7 @@ const HELD_JUMP_GRAVITY_SCALE = 0.45;
 const SHORT_HOP_VELOCITY_SCALE = 0.45;
 const LANDING_FRICTION_DURATION = 120;
 const MAX_PROJECTILE_CHARGE_DURATION = 3000;
+const PROJECTILE_CHARGE_START_DELAY = 150;
 const PROJECTILE_SLOWDOWN_DELAY = 500;
 const MAX_SHIELD_HEALTH = 75;
 const SHIELD_DECAY_PER_SECOND = 9;
@@ -40,6 +41,11 @@ const SHIELD_REGEN_PER_SECOND = 4.8;
 const SHIELD_DAMAGE_MULTIPLIER = 1.19;
 const SHIELD_BREAK_LAUNCH_VELOCITY = -0.18;
 const SHIELD_BREAK_STUN_DURATION = 2500;
+const RESPAWN_INVINCIBILITY_DURATION = 3000;
+const DOWNSMASH_EFFECT_FRAME_ENDS = [100, 230, 380, 510, 610, 660];
+const DOWNSMASH_EFFECT_BASELINES = [25, 26, 27, 26, 28, 25];
+const downsmashEffectImage = new Image();
+downsmashEffectImage.src = "/downsmash.png";
 const STALE_MOVE_REDUCTORS = [0.09, 0.08545, 0.07635, 0.0679, 0.05945, 0.05035, 0.04255, 0.03345, 0.025];
 
 class Normal {
@@ -49,11 +55,8 @@ class Normal {
     public readonly canAttack = true;
 
     frame(delta: number) {
-        const SPEED = 0.1;
+        const SPEED = 0.15;
         const grounded = this.player.body.isOnGround();
-        if (this.player.jumpPressedThisFrame && this.player.canJump(grounded)) {
-            this.player.startJump(grounded);
-        }
 
         if (this.player.isShielding && !(grounded && this.player.jumpPressedThisFrame)) {
             this.player.body.velocity.x = 0;
@@ -73,8 +76,10 @@ class Normal {
             this.player.facing = "right";
         }
 
-        if (this.player.isControlPressed("primary")) {
-            sounds.melee().play();
+        if (!this.player.isPreparingProjectile && this.player.isControlPressed("primary")) {
+            if (this.player.primaryPressedThisFrame) {
+                sounds.melee().play();
+            }
 
             const attackHitbox = boxTranslate(
                 this.player.body.getCollisionBox(),
@@ -93,17 +98,17 @@ class Normal {
                         {
                             x: this.player.character.primaryAttackKnockback.x
                                 * (this.player.facing === "right" ? 1 : -1),
-                            y: this.player.character.primaryAttackKnockback.y
+                            y: -Math.abs(this.player.character.primaryAttackKnockback.y)
                         },
                         150,
-                        3);
+                        12);
                     this.player.state = new Stunned(this.player, 500);
                 }
             }
         }
 
         if (this.player.isControlPressed("down") && this.player.isControlPressed("secondary")) {
-            this.player.state = new Downsmashing(this.player);
+            this.player.startDownsmash();
         }
         this.player.body.frame(delta, false, this.player.updateJumpPhysics(delta));
 
@@ -134,6 +139,7 @@ class Downsmashing {
 
     constructor(public player: Player) {
         this.startTime = Date.now();
+        player.queueDownsmashLandingEffect();
     }
 
     public readonly canAttack = true;
@@ -168,7 +174,8 @@ class Downsmashing {
             }
         }
 
-        if (this.player.body.isOnGround() || attacked) {
+        const landed = this.player.body.isOnGround();
+        if (landed || attacked) {
             sounds.downsmash().play();
             this.player.state = new Stunned(this.player, 700);
         }
@@ -209,6 +216,8 @@ export default class Player implements Entity, Attackable {
 
     private _percentage: number = 0;
 
+    public stocks = 3;
+
     public facing: "left" | "right" = "right";
 
     private projectileIcon: HTMLImageElement;
@@ -220,15 +229,35 @@ export default class Player implements Entity, Attackable {
     private jumpReleasedThisFrame = false;
     public jumpPressedThisFrame = false;
     private jumpHoldDuration = 0;
+    private primaryHeldLastFrame = false;
+    private primaryBlockedUntilRelease = false;
+    public primaryPressedThisFrame = false;
     private chargingProjectile = false;
     private projectileChargeDuration = 0;
     private secondaryHeldLastFrame = false;
+    private downsmashBlockedUntilRelease = false;
     private shieldHealth = MAX_SHIELD_HEALTH;
+    private respawnInvincibilityRemaining = 0;
+    private upwardKnockbackActive = false;
+    private downsmashEffect?: { x: number; y: number; elapsed: number; };
+    private downsmashLandingPending = false;
     private staleMoveHistory: { move: string; shieldFactor: number; }[] = [];
     private _attackDebugHitboxes: { topLeft: { x: number; y: number; }; bottomRight: { x: number; y: number; }; }[] = [];
 
-    get isChargingProjectile() {
+    get isPreparingProjectile() {
         return this.chargingProjectile;
+    }
+
+    get isChargingProjectile() {
+        return this.chargingProjectile && this.projectileChargeDuration >= PROJECTILE_CHARGE_START_DELAY;
+    }
+
+    get isInvincible() {
+        return this.respawnInvincibilityRemaining > 0;
+    }
+
+    get canBeKOdFromTop() {
+        return this.upwardKnockbackActive;
     }
 
     get isProjectileSlowdownActive() {
@@ -243,12 +272,31 @@ export default class Player implements Entity, Attackable {
         this._attackDebugHitboxes.push(hitbox);
     }
 
+    queueDownsmashLandingEffect() {
+        this.downsmashLandingPending = true;
+    }
+
+    startDownsmash() {
+        if (this.downsmashBlockedUntilRelease || this.chargingProjectile) return;
+        this.downsmashBlockedUntilRelease = true;
+        this._state = new Downsmashing(this);
+    }
+
+    private startDownsmashLandingEffect() {
+        this.downsmashLandingPending = false;
+        this.downsmashEffect = {
+            x: this.body.position.x + this.body.collisionBoxSize.width / 2,
+            y: this.body.position.y,
+            elapsed: 0,
+        };
+    }
+
     get projectileChargeRatio() {
-        return this.projectileChargeDuration / MAX_PROJECTILE_CHARGE_DURATION;
+        return this.isChargingProjectile ? this.projectileChargeDuration / MAX_PROJECTILE_CHARGE_DURATION : 0;
     }
 
     get isShielding() {
-        return this._state instanceof Normal && this.shieldHealth > 0 && this.body.isOnGround() && this.isControlPressed("shield");
+        return !this.chargingProjectile && this._state instanceof Normal && this.shieldHealth > 0 && this.body.isOnGround() && this.isControlPressed("shield");
     }
 
     get shieldHealthRatio() {
@@ -284,10 +332,14 @@ export default class Player implements Entity, Attackable {
         const hit = target.attack(
             damage * multiplier,
             { x: knockback.x * multiplier * knockbackMultiplier, y: knockback.y * multiplier * knockbackMultiplier },
-            stunTime
+            stunTime,
+            move === "primary" ? { base: 15, scaling: 0.5 } : undefined
         );
         if (hit) {
             this.recordStaleMove(move, hitShield);
+            if (move === "primary") {
+                sounds.punch().play();
+            }
         }
         return hit;
     }
@@ -302,6 +354,7 @@ export default class Player implements Entity, Attackable {
         this.projectileIcon.src = this.character.projectilePreset.image;
         this._state = new Normal(this);
         this.body = new Body(game, { x: 100, y: 0 }, this.character.collisionBox, { x: 0, y: 0 }, REALISTIC_DRAG, REALISTIC_GRAVITY, () => this.isControlPressed("down"), LANDING_FRICTION_DURATION);
+        this.primaryBlockedUntilRelease = this.getControlStrength("primary") > 0;
     }
 
     get state() {
@@ -313,24 +366,49 @@ export default class Player implements Entity, Attackable {
     }
 
     frame(delta: number) {
+        this.respawnInvincibilityRemaining = Math.max(0, this.respawnInvincibilityRemaining - delta);
+        if (!this.isControlPressed("secondary")) {
+            this.downsmashBlockedUntilRelease = false;
+        }
         this._attackDebugHitboxes = [];
+        if (this.downsmashEffect && downsmashEffectImage.complete && downsmashEffectImage.naturalWidth > 0) {
+            this.downsmashEffect.elapsed += delta;
+            if (this.downsmashEffect.elapsed >= 660) {
+                this.downsmashEffect = undefined;
+            }
+        }
         const jumpHeld = this.isControlPressed("up");
         this.jumpPressedThisFrame = jumpHeld && !this.jumpHeldLastFrame;
         this.jumpReleasedThisFrame = !jumpHeld && this.jumpHeldLastFrame;
         this.jumpHeldLastFrame = jumpHeld;
+        const primaryHeld = this.isControlPressed("primary");
+        this.primaryPressedThisFrame = primaryHeld && !this.primaryHeldLastFrame;
+        this.primaryHeldLastFrame = primaryHeld;
 
         this.updateShield(delta);
         if (this._state instanceof Normal) {
+            const grounded = this.body.isOnGround();
+            if (this.jumpPressedThisFrame && this.canJump(grounded)) {
+                this.startJump(grounded);
+            }
             this.updateProjectileCharge(delta);
         }
         this._state.frame(delta);
+        if (this.downsmashLandingPending && this.body.isOnGround()) {
+            this.startDownsmashLandingEffect();
+        }
+        if (this.body.velocity.y >= 0) {
+            this.upwardKnockbackActive = false;
+        }
     }
 
-    attack(damage: number, knockback: { x: number, y: number; }, stunTime: number): boolean {
+    attack(damage: number, knockback: { x: number, y: number; }, stunTime: number, knockbackProfile?: KnockbackProfile): boolean {
+        if (this.isInvincible) return false;
+
         if (this._state instanceof ShieldBroken) {
             if (!this._state.hasLanded) return false;
             this.shieldHealth = MAX_SHIELD_HEALTH * 0.75;
-            this.applyDamage(damage, knockback, stunTime);
+            this.applyDamage(damage, knockback, stunTime, knockbackProfile);
             return true;
         }
 
@@ -343,7 +421,7 @@ export default class Player implements Entity, Attackable {
         }
 
         if (this._state.canAttack) {
-            this.applyDamage(damage, knockback, stunTime);
+            this.applyDamage(damage, knockback, stunTime, knockbackProfile);
             return true;
         }
         return false;
@@ -355,11 +433,25 @@ export default class Player implements Entity, Attackable {
         }
 
         context.save();
+        if (this.isInvincible && Math.floor(this.respawnInvincibilityRemaining / 100) % 2 === 0) {
+            context.globalAlpha = 0.4;
+        }
         if (this._state instanceof ShieldBroken) {
             context.filter = "brightness(0.8)";
         }
         this.character.render(this._state, context, { x: this.body.position.x, y: this.body.position.y }, this.facing);
         context.restore();
+
+        if (this.downsmashEffect && downsmashEffectImage.complete && downsmashEffectImage.naturalWidth > 0) {
+            const frame = DOWNSMASH_EFFECT_FRAME_ENDS.findIndex(end => this.downsmashEffect!.elapsed < end);
+            context.drawImage(
+                downsmashEffectImage,
+                frame * 50, 0, 50, 30,
+                this.downsmashEffect.x - 25,
+                this.downsmashEffect.y - DOWNSMASH_EFFECT_BASELINES[frame],
+                50, 30
+            );
+        }
     }
 
     getControlStrength(control: keyof typeof this.controls): number {
@@ -392,6 +484,8 @@ export default class Player implements Entity, Attackable {
     }
 
     startJump(grounded: boolean) {
+        this.downsmashLandingPending = false;
+        this.upwardKnockbackActive = false;
         this.body.velocity.y = -0.25;
         if (!grounded) {
             this.airJumpUsed = true;
@@ -404,7 +498,8 @@ export default class Player implements Entity, Attackable {
             this.body.velocity.y *= SHORT_HOP_VELOCITY_SCALE;
         }
 
-        const holdingAscent = this.isControlPressed("up") && this.body.velocity.y < 0 && this.jumpHoldDuration < MAX_JUMP_HOLD_DURATION;
+        const jumpHeld = this.isControlPressed("up");
+        const holdingAscent = jumpHeld && this.body.velocity.y < 0 && this.jumpHoldDuration < MAX_JUMP_HOLD_DURATION;
         if (holdingAscent) {
             this.jumpHoldDuration = Math.min(MAX_JUMP_HOLD_DURATION, this.jumpHoldDuration + delta);
         }
@@ -482,17 +577,41 @@ export default class Player implements Entity, Attackable {
     }
 
     private breakShield() {
+        this.downsmashLandingPending = false;
+        this.upwardKnockbackActive = false;
         this._state = new ShieldBroken(this);
     }
 
-    private applyDamage(damage: number, knockback: { x: number, y: number; }, stunTime: number) {
+    private applyDamage(damage: number, knockback: { x: number, y: number; }, stunTime: number, knockbackProfile: KnockbackProfile = { base: 20, scaling: 1 }) {
+        this.downsmashLandingPending = false;
         this.percentage += damage;
-        const knockbackScale = (this.percentage + 20) / 100;
+        const knockbackScale = (this.percentage * knockbackProfile.scaling + knockbackProfile.base) / 100;
         this.body.velocity = {
             x: this.body.velocity.x + knockback.x * knockbackScale,
             y: this.body.velocity.y + knockback.y * knockbackScale,
         };
+        this.upwardKnockbackActive = knockback.y < 0 && this.body.velocity.y < 0;
         this._state = new Stunned(this, stunTime);
+    }
+
+    loseStock() {
+        this.stocks = Math.max(0, this.stocks - 1);
+        this.percentage = 0;
+        return this.stocks;
+    }
+
+    respawn(position: { x: number; y: number; }) {
+        this.upwardKnockbackActive = false;
+        this.downsmashEffect = undefined;
+        this.downsmashLandingPending = false;
+        this.respawnInvincibilityRemaining = RESPAWN_INVINCIBILITY_DURATION;
+        this.body.position = position;
+        this.body.velocity = { x: 0, y: 0 };
+        this.shieldHealth = MAX_SHIELD_HEALTH;
+        this.chargingProjectile = false;
+        this.projectileChargeDuration = 0;
+        this.airJumpUsed = false;
+        this._state = new Normal(this);
     }
 
     private renderShield(context: CanvasRenderingContext2D) {
@@ -502,8 +621,8 @@ export default class Player implements Entity, Attackable {
         const centerY = this.body.position.y - this.body.collisionBoxSize.height / 2;
         const gridRadius = Math.ceil(radius / pixelSize);
         const isPlayerOne = this.name === "Player 1";
-        const fillColor = isPlayerOne ? "rgba(55, 145, 255, 0.14)" : "rgba(255, 65, 82, 0.14)";
-        const edgeColor = isPlayerOne ? "#66baff" : "#ff7882";
+        const fillColor = isPlayerOne ? "rgba(21, 84, 163, 0.14)" : "rgba(46, 179, 83, 0.14)";
+        const edgeColor = isPlayerOne ? "#4c91d4" : "#2eb353";
 
         for (let gridY = -gridRadius; gridY <= gridRadius; gridY++) {
             for (let gridX = -gridRadius; gridX <= gridRadius; gridX++) {
@@ -530,6 +649,11 @@ export default class Player implements Entity, Attackable {
     }
 
     isControlPressed(control: keyof typeof this.controls): boolean {
-        return this.getControlStrength(control) > 0;
+        const pressed = this.getControlStrength(control) > 0;
+        if (control === "primary" && this.primaryBlockedUntilRelease) {
+            this.primaryBlockedUntilRelease = pressed;
+            return false;
+        }
+        return pressed;
     }
 }

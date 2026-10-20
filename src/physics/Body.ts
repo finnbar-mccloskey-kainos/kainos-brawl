@@ -61,6 +61,10 @@ export default class Body {
             this.position.y = nextY;
         }
 
+        if (!this.isOnGround()) {
+            this.landingFrictionRemaining = 0;
+        }
+
         if (this.landingFrictionRemaining > 0) {
             const previousRemaining = this.landingFrictionRemaining;
             this.landingFrictionRemaining = Math.max(0, previousRemaining - delta);
