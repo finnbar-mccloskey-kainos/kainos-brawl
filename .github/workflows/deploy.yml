@@ -1,6 +1,8 @@
 on: push
 jobs:
   build:
+    permissions:
+      pages: write
     name: Build and deploy
     runs-on: ubuntu-latest
     steps:
