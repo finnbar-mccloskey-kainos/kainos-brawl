@@ -52,7 +52,7 @@ main {
   flex-direction: row;
   width: 100%;
   height: 100%;
-  background-image: url("/menu.jpg");
+  background-image: var(--menu-background);
   background-size: cover;
   background-position: center;
 }

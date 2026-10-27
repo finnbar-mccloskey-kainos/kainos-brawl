@@ -1,7 +1,9 @@
+import officeBackground from "/maps/officebg.jpg?url";
+import buildingBackground from "/maps/building.png?url";
 import MapData from "./MapData";
 
 export default {
-    background: "building.png",
+    background: buildingBackground,
     solids: [
         {
             topLeft: { x: 48, y: 208 },
@@ -30,7 +32,7 @@ export default {
 } satisfies MapData;
 
 export const OfficeMap = {
-    background: "office.png",
+    background: officeBackground,
     solids: [
         {
             topLeft: { x: -100, y: 182 },

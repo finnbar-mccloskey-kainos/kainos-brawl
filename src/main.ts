@@ -1,3 +1,5 @@
+import logoImage from "/logo.png?url";
+import menuBackground from "/menu.jpg?url";
 import "./style.css";
 import MainMenu from "./state/MainMenu";
 import Game from "./state/Game";
@@ -8,8 +10,9 @@ import WinScreen from "./state/WinScreen";
 import { setupSounds, SoundPlayer } from "./sound";
 
 export let logo = new Image();
-logo.src = "/logo.png";
+logo.src = logoImage;
 logo.classList.add("logo");
+document.documentElement.style.setProperty("--menu-background", `url("${menuBackground}")`);
 
 export const DEBUG = false;
 

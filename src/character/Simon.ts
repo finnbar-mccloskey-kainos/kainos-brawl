@@ -1,3 +1,6 @@
+import simonSprite from "/characters/simon/simonsprite.png?url";
+import simonFace from "/characters/simon/face.jpeg?url";
+import simonBadge from "/Items/SimonBadge.png?url";
 import { PlayerState, Stunned } from "../entity/Player";
 import Character from "./Character";
 
@@ -6,8 +9,8 @@ export default class Simon implements Character {
     private readonly sprite = new Image();
 
     constructor() {
-        this.sprite.onerror = () => console.error("Failed to load Simon sprite: characters/simon/testsprite.png");
-        this.sprite.src = "characters/simon/simonsprite.png";
+        this.sprite.onerror = () => console.error(`Failed to load Simon sprite: ${simonSprite}`);
+        this.sprite.src = simonSprite;
     }
 
     get name(): string {
@@ -15,7 +18,7 @@ export default class Simon implements Character {
     }
 
     get icon(): string {
-        return "characters/simon/face.jpeg";
+        return simonFace;
     }
 
     get collisionBox() {
@@ -47,7 +50,7 @@ export default class Simon implements Character {
             knockback: 0.03,
             maxLifetime: 2000,
             stunTime: 300,
-            image: "Items/SimonBadge.png"
+            image: simonBadge
         };
     }
 

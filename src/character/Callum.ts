@@ -1,3 +1,6 @@
+import callumSprite from "/characters/callum/testsprite.png?url";
+import callumFace from "/characters/callum/face.jpeg?url";
+import eggyImage from "/Items/Eggy.png?url";
 import { PlayerState, Stunned } from "../entity/Player";
 import ProjectilePreset from "../entity/projectile/ProjectilePreset";
 import Character from "./Character";
@@ -7,8 +10,8 @@ export default class Callum implements Character {
     private readonly sprite = new Image();
 
     constructor() {
-        this.sprite.onerror = () => console.error("Failed to load Callum sprite: characters/callum/testsprite.png");
-        this.sprite.src = "characters/callum/testsprite.png";
+        this.sprite.onerror = () => console.error(`Failed to load Callum sprite: ${callumSprite}`);
+        this.sprite.src = callumSprite;
     }
 
     get name(): string {
@@ -16,7 +19,7 @@ export default class Callum implements Character {
     }
 
     get icon(): string {
-        return "characters/callum/face.jpeg";
+        return callumFace;
     }
 
     get collisionBox() {
@@ -48,7 +51,7 @@ export default class Callum implements Character {
             knockback: 0.3,
             maxLifetime: 2000,
             stunTime: 300,
-            image: "Items/Eggy.png"
+            image: eggyImage
         };
     }
 

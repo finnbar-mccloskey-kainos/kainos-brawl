@@ -1,3 +1,6 @@
+import brendanSprite from "/characters/brendan/brendansprite.png?url";
+import brendanFace from "/characters/brendan/face.jpeg?url";
+import yetiMug from "/Items/YetiMug.png?url";
 import { PlayerState, Stunned } from "../entity/Player";
 import Character from "./Character";
 
@@ -6,8 +9,8 @@ export default class Brendan implements Character {
     private readonly sprite = new Image();
 
     constructor() {
-        this.sprite.onerror = () => console.error("Failed to load Brendan sprite: characters/brendan/testsprite.png");
-        this.sprite.src = "characters/brendan/brendansprite.png";
+        this.sprite.onerror = () => console.error(`Failed to load Brendan sprite: ${brendanSprite}`);
+        this.sprite.src = brendanSprite;
     }
 
     get name(): string {
@@ -15,7 +18,7 @@ export default class Brendan implements Character {
     }
 
     get icon(): string {
-        return "characters/brendan/face.jpeg";
+        return brendanFace;
     }
 
     get collisionBox() {
@@ -46,7 +49,7 @@ export default class Brendan implements Character {
             gravity: 0.0003,
             knockback: 0.3,
             maxLifetime: 2000,
-            image: "Items/YetiMug.png",
+            image: yetiMug,
             stunTime: 300,
         };
     }

@@ -3,7 +3,7 @@ import MapData from "./MapData";
 export default class Map {
     constructor(public data: MapData) {
         let background = new Image();
-        background.src = "/maps/" + this.data.background;
+        background.src = this.data.background;
         background.onload = () => {
             this.background = background;
         };

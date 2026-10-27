@@ -1,3 +1,6 @@
+import zuzannaSprite from "/characters/Zuzanna/zuzsprite.png?url";
+import zuzannaFace from "/characters/Zuzanna/Zuzface.jpeg?url";
+import kainosId from "/Items/KainosID.png?url";
 import { PlayerState, Stunned } from "../entity/Player";
 import ProjectilePreset from "../entity/projectile/ProjectilePreset";
 import Character from "./Character";
@@ -7,8 +10,8 @@ export default class Zuzanna implements Character {
     private readonly sprite = new Image();
 
     constructor() {
-        this.sprite.onerror = () => console.error("Failed to load Zuzanna sprite: characters/zuzanna/Zuzsprite.png");
-        this.sprite.src = "characters/Zuzanna/zuzsprite.png";
+        this.sprite.onerror = () => console.error(`Failed to load Zuzanna sprite: ${zuzannaSprite}`);
+        this.sprite.src = zuzannaSprite;
     }
 
     get name(): string {
@@ -16,7 +19,7 @@ export default class Zuzanna implements Character {
     }
 
     get icon(): string {
-        return "characters/Zuzanna/Zuzface.jpeg";
+        return zuzannaFace;
     }
 
     get collisionBox() {
@@ -48,7 +51,7 @@ export default class Zuzanna implements Character {
             knockback: 0.3,
             maxLifetime: 2000,
             stunTime: 300,
-            image: "Items/KainosID.png"
+            image: kainosId
         };
     }
 
