@@ -3,6 +3,7 @@ jobs:
   build:
     permissions:
       pages: write
+      contents: write
     name: Build and deploy
     runs-on: ubuntu-latest
     steps:
