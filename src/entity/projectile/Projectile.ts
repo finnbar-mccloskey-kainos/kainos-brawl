@@ -24,7 +24,7 @@ export default class Projectile implements Entity {
         public preset: ProjectilePreset,
         private readonly image: HTMLImageElement,
         private readonly staleDamageMultiplier = 1,
-        private readonly onHit?: (hitShield: boolean) => void,
+        private readonly onHit?: () => void,
         private readonly chargeDamageMultiplier = 1,
     ) {
         this.body = new Body(game, { ...source.body.position }, { width: image.width, height: image.height });
@@ -59,7 +59,7 @@ export default class Projectile implements Entity {
                     this.preset.stunTime
                 );
                 if (hit) {
-                    this.onHit?.(hitShield);
+                    this.onHit?.();
                 }
                 this._shouldDelete = true;
                 break;

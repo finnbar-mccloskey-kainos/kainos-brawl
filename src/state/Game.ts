@@ -302,23 +302,6 @@ export default class Game {
                         playerHitbox.bottomRight.x - playerHitbox.topLeft.x,
                         playerHitbox.bottomRight.y - playerHitbox.topLeft.y
                     );
-
-                    for (const hitbox of entity.attackDebugHitboxes) {
-                        context.fillStyle = "rgba(255, 140, 0, 0.3)";
-                        context.fillRect(
-                            hitbox.topLeft.x,
-                            hitbox.topLeft.y,
-                            hitbox.bottomRight.x - hitbox.topLeft.x,
-                            hitbox.bottomRight.y - hitbox.topLeft.y
-                        );
-                        context.strokeStyle = "#ff8c00";
-                        context.strokeRect(
-                            hitbox.topLeft.x,
-                            hitbox.topLeft.y,
-                            hitbox.bottomRight.x - hitbox.topLeft.x,
-                            hitbox.bottomRight.y - hitbox.topLeft.y
-                        );
-                    }
                 } else if (DEBUG && entity instanceof Projectile) {
                     const hitbox = entity.body.getCollisionBox();
                     context.strokeStyle = "#ff8c00";
@@ -346,21 +329,6 @@ export default class Game {
                         entity.body.position.y - 5 - entity.body.collisionBoxSize.height,
                     );
                     context.restore();
-
-                    if (entity.isChargingProjectile) {
-                        const meterWidth = 20;
-                        const meterHeight = 3;
-                        const meterX = entity.body.position.x + (entity.body.collisionBoxSize.width - meterWidth) / 2;
-                        const meterY = entity.body.position.y - entity.body.collisionBoxSize.height - 25;
-
-                        context.fillStyle = "#0b2914";
-                        context.fillRect(meterX, meterY, meterWidth, meterHeight);
-                        context.fillStyle = "#2eb353";
-                        context.fillRect(meterX, meterY, meterWidth * entity.projectileChargeRatio, meterHeight);
-                        context.strokeStyle = "#d5f5dd";
-                        context.lineWidth = 1;
-                        context.strokeRect(meterX, meterY, meterWidth, meterHeight);
-                    }
                 }
             }
 
