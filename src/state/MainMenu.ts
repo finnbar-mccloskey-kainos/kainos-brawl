@@ -263,7 +263,7 @@ export default class MainMenu implements EventListenerObject {
             button.type = "button";
             button.className = "stage";
             const preview = new Image();
-            preview.src = `/maps/${stage.data.background}`;
+            preview.src = `${stage.data.background}`;
             preview.alt = `${stage.name} stage preview`;
             const name = document.createElement("span");
             name.textContent = stage.name;
