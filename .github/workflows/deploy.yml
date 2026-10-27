@@ -10,6 +10,10 @@ jobs:
             node-version: '24'
       - run: npm install
       - run: npm run build
+      - uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
+        id: deployment
+        with:
+          path: dist/
 
   # Deploy job
   deploy:
